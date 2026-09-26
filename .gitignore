@@ -1,0 +1,16 @@
+# Environments
+.env
+venv/
+env/
+
+# Python
+__pycache__/
+*.pyc
+
+# C++ (If you end up using it)
+*.o
+*.out
+build/
+
+# OS generated files
+.DS_Store

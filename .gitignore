@@ -2,10 +2,16 @@
 .env
 venv/
 env/
+.venv/
 
 # Python
 __pycache__/
 *.pyc
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+results/
 
 # C++ (If you end up using it)
 *.o

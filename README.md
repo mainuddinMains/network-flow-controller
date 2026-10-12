@@ -9,10 +9,22 @@ Saint Louis University · Computer Networks
 | Henry Morgan | Network simulator |
 | Adrian Wehlen | Telemetry & evaluation |
 
-Run reproducible packet-level experiments with independent flows sharing one
-finite FIFO bottleneck. The AIMD baseline and Reno-style controller adapt their
-windows to loss and ECN. Telemetry exports throughput, RTT, loss, queue depth,
-and Jain's fairness to CSV, JSON, and optional PNG plots.
+## Current contribution
+
+This branch contains Mains Mainuddin's algorithm work and integration wiring.
+The simulator and telemetry implementations remain the responsibilities of
+Henry and Adrian.
+
+- Implemented: controller interface (#4), AIMD (#6), RTT estimation (#7), and
+  the Reno-style slow-start/congestion-avoidance/recovery state machine (#8).
+- Prepared: the CLI and integration orchestration (#16), plus the five-flow
+  acceptance tests (#17). End-to-end completion awaits teammate APIs.
+- Fixed: pytest's source import path and interpreter-specific CI commands.
+
+The full earlier implementation is preserved on
+[codex/full-implementation-reference](https://github.com/mainuddinMains/network-flow-controller/tree/codex/full-implementation-reference)
+for optional reference. It is not included in this PR's proposed simulator or
+telemetry changes.
 
 ## Setup
 
@@ -25,118 +37,65 @@ source .venv/bin/activate
 python -m pip install -r requirements.txt
 ```
 
-## Run an experiment
+## Algorithm use
 
-```bash
-python -m src.simulator --flows 5 --duration 60 --bandwidth 10Mbps --algorithm aimd --plots
+```python
+from src.algorithm import AIMDController
+
+controller = AIMDController(cwnd=10, initial_rtt=0.1)
+rate = controller.step({
+    "rtt": 0.1, "loss": False, "ecn": False, "bytes_acked": 1500,
+})
+# cwnd is now 11 packets; rate is bytes/second.
 ```
 
-Duration is simulated time; the program does not sleep for that duration.
-`python -m src` provides the same interface. Run both commands from the repository
-root with the virtual environment activated.
+Use `RenoController` for the modeled state machine. Windows are in packets,
+control RTT is in seconds, and the returned sending rate is bytes/second.
 
-| Flag | Meaning | Default |
-|---|---|---|
-| `--flows` | Independent controlled flows | `5` |
-| `--duration` | Simulated seconds | `60` |
-| `--bandwidth` | Bits/second; accepts `10Mbps`, `100Kbps`, or a number | `10Mbps` |
-| `--delay` | One-way propagation delay; accepts `20ms` or seconds | `20ms` |
-| `--buffer` | Packets awaiting departure, including the packet in service | `100` |
-| `--algorithm` | `aimd` or `reno` | `aimd` |
-| `--output` | Destination for `run.csv` and `run.json` | `results/` |
-| `--seed` | Initial pacing, random loss, and jitter seed | `0` |
-| `--packet-size` | Payload bytes and controller MSS | `1500` |
-| `--start-times` | Comma-separated start times, one per flow | All zero |
-| `--cross-traffic` | Fixed background bits/second on the same link | `0` |
-| `--loss` | Independent drop probability, in addition to buffer drops | `0` |
-| `--jitter` | Maximum extra forward propagation delay | `0` |
-| `--ecn-threshold` | Mark above this fraction of buffer occupancy | `0.5` |
-| `--plots` | Save throughput, queue, and fairness PNGs | Off |
+## Integration status
 
-Use separate output directories to preserve experiments:
+CLI help works without the teammate implementations:
 
 ```bash
-python -m src.simulator --duration 30 --algorithm aimd --seed 0 --output results/aimd
-python -m src.simulator --duration 30 --algorithm reno --seed 0 --output results/reno
-python -m src.simulator --flows 3 --duration 30 --start-times 0,5,10 --cross-traffic 1Mbps --loss 0.01 --jitter 2ms --output results/staggered
+python -m src.simulator --help
+python -m src --help
 ```
 
-The CLI prints a JSON summary. CSV contains one observation per feedback
-interval per flow, including the final partial interval. JSON includes the same
-series grouped by flow ID, summary statistics, units, and configuration. Reusing
-an output directory replaces its run files.
-
-Plot an existing CSV:
+Once the shared interfaces are available, the intended command is:
 
 ```bash
-python -m src.telemetry.plot --input results/aimd/run.csv
+python -m src.simulator --flows 5 --duration 30 --bandwidth 10Mbps --algorithm aimd --output results/run1
 ```
 
-The noninteractive plots are saved beside the CSV in `plots/`.
+Until then, the CLI reports the missing interfaces and creates no experiment
+output. `--plots` delegates to Adrian's plotting API; this branch does not
+implement plotting.
 
-## Units and metrics
+The integration wrapper targets the proposed public API described in
+[the integration contract](docs/integration-contract.md). Confirm/adapt those
+interfaces with Henry and Adrian as their implementations arrive.
 
-- Control uses seconds, packets, and bytes/second.
-- Exported throughput is newly acknowledged unique payload bytes/second; RTT
-  is milliseconds; loss is a percentage of attempted transmissions.
-- Multiply throughput by eight to report bits/second.
-- Time-series fairness compares the latest rate of each active flow.
-- Summary fairness compares cumulative rates over each flow's own active
-  duration. Flows starting after the experiment ends are excluded from fairness
-  and have zero delivered bytes.
-- Retries do not count payload twice. Background traffic competes for capacity
-  but is excluded from controlled-flow telemetry.
-
-## Tests and CI
+## Validation
 
 ```bash
 ruff check src/ tests/
-pytest tests/ -v
-python -m pytest tests/ --cov=src --cov-report=term-missing
+python -m pytest tests/ -v -rs --cov=src --cov-report=term-missing
 ```
 
-Pytest includes the repository root in its import path. CI installs dependencies
-using the selected interpreter, then runs lint and coverage tests on pushes and
-pull requests to main.
+Controller tests exercise real algorithm behavior. CLI tests use recording
+doubles to verify argument handling and delegation; those doubles do not
+implement network scheduling or metrics. Two real five-flow integration cases
+skip with an explicit dependency reason while the teammate APIs are absent.
+They will exercise the real implementations once the APIs are exposed.
 
-Behavior tests cover controllers, RTT estimation, recovery, queue service,
-drops, ECN, immutable feedback, reproducibility, staggered flows, cross-traffic,
-observer isolation, exports, plotting, and invalid CLI arguments. Integration
-tests run five flows for 30 simulated seconds with each controller, require
-fairness >= 0.9 and positive throughput for every flow, check matching nonempty
-CSV/JSON, and require execution under 30 wall-clock seconds.
+The original import tests are unchanged. Follow [CLAUDE.md](CLAUDE.md) before
+creating or modifying test files.
 
-Follow [CLAUDE.md](CLAUDE.md) before creating or modifying test files.
+## Documentation
 
-## Structure
-
-```text
-src/
-├── algorithm/controller.py   # Controllers, RTT estimation, state transitions
-├── simulator/
-│   ├── link.py               # Packets, FIFO service, ECN
-│   ├── traffic.py            # Independent flows and traffic sources
-│   ├── simulation.py         # Event scheduler, ACKs, per-RTT feedback
-│   └── cli.py                # Configuration and entry point
-└── telemetry/
-    ├── metrics.py            # Observer, fairness, CSV/JSON
-    └── plot.py               # Standalone PNG generation
-tests/                       # Behavior and integration tests
-docs/                        # Design, issue mapping, and measured results
-```
-
-Controllers receive immutable feedback every estimated RTT. Telemetry only
-observes feedback and cannot change controller or simulator state. All random
-events use a local seeded RNG.
-
-This educational model uses one bottleneck, aggregate per-RTT feedback,
-individual packet delivery ACKs, and ideal per-round drop detection. It does not
-implement a full TCP stack, cumulative-ACK retransmission timers, ACK link
-serialization, or a multi-hop topology. Results apply to these assumptions.
-
-See [algorithm design](docs/algorithm-design.md),
-[issue solutions](docs/issue-solutions.md), and
-[evaluation results](docs/evaluation.md).
+- [Algorithm design](docs/algorithm-design.md)
+- [Integration contract and pending work](docs/integration-contract.md)
+- [Issue scope and ownership](docs/issue-solutions.md)
 
 ## License
 

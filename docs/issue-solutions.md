@@ -1,69 +1,51 @@
-# Issue solutions
+# Issue scope and ownership
 
-This maps the GitHub backlog to the local implementation. Remote issue closure
-should follow review and merge; this document does not change issue states or
-milestone dates.
+PR #18 is limited to Mains Mainuddin's algorithm and integration responsibilities.
+It does not propose implementations for Henry's simulator tasks or Adrian's
+telemetry tasks. Their original package files are preserved relative to main.
 
-## CI and setup
+## Mains Mainuddin's tasks
 
-The CI failure was an import-path problem: the pytest executable did not
-include the repository root, so imports of src failed. Setting
-`pythonpath = ["."]` in pyproject.toml fixes both direct and module invocation.
-CI uses `python -m pip` and `python -m pytest` to use the selected interpreter.
-Git ignores the local environment, caches, coverage, and generated results.
+| Issue | Current status |
+|---|---|
+| #4 — Controller interface | Implemented and unit-tested |
+| #6 — AIMD baseline | Implemented and unit-tested |
+| #7 — RTT estimation | Implemented and unit-tested |
+| #8 — State machine | Implemented and unit-tested |
+| #16 — CLI and integration | Wiring and argument validation prepared; real module integration pending |
+| #17 — Five-flow integration test | Acceptance test prepared; two controller cases skip until real teammate APIs arrive |
+| #1 — Algorithm epic | Tracks #4, #6, #7, and #8; review/merge still required |
 
-## Issue map
+The pytest import-path fix and interpreter-specific CI commands remain included
+because they are needed to validate this contribution.
 
-| Issue | Implementation | Main verification |
-|---|---|---|
-| #4 — Controller interface | Abstract CongestionController; validated initial state; immutable mapping input; bytes/second output | Abstract interface, validation, feedback isolation |
-| #6 — AIMD | One-packet additive growth; one halving per loss/ECN round; one-packet floor | Growth, combined loss/ECN, no-ACK behavior |
-| #7 — RTT | First-sample initialization; alpha 1/8 and beta 1/4; deviation updated first; timeout property | Numerical samples, convergence, invalid/missing samples |
-| #8 — State machine | Reno slow start, congestion avoidance, duplicate-ACK recovery, timeout restart | Thresholds, duplicate ACKs across rounds, completion, timeout |
-| #5 — Link | Immutable packets, finite FIFO, service delay, propagation delay, ECN | Exact serialization, overflow drop, threshold boundary |
-| #9 — Scheduler | Event heap for sends/receives/ACKs/feedback; timestamped drop/ECN events; seeded randomness | Event logs, physical capacity bound, reproducibility |
-| #10 — Traffic | Independent controllers, tagged sequences, staggered starts, paced window-limited sends, cross-traffic | Independent state, activation, competing traffic |
-| #11 — Feedback | Immutable per-round original fields plus explicit recovery signals | Read-only boundary and repeated controller feedback |
-| #12 — Recorder | Detached snapshots, immutable series, throughput/RTT/loss/window/queue observations | Units, counters, observer isolation |
-| #13 — Fairness | Stable Jain calculation with documented zero convention; interval and summary fairness | Equal/unequal rates, one flow, zeros, invalid/huge values |
-| #14 — Logging | CSV and per-flow JSON from the same captured recorder snapshot; automatic directories | Parsing, consistent counters, snapshot stability |
-| #15 — Plotting | Standalone noninteractive throughput, queue, and fairness PNGs with labels/legends/titles | Actual PNGs and invalid CSV handling |
-| #16 — Integration / CLI | Both package entry points delegate to one CLI; all modules wired; validated flags; exports | Both commands, units/configuration, errors, optional plots |
-| #17 — Integration test | Five flows for 30 simulated seconds, both algorithms; fairness >= 0.9; no starvation; matching outputs; runtime < 30 s | tests/test_integration.py |
+## Teammate work outside this PR
 
-Main source files:
-`src/algorithm/controller.py`, `src/simulator/link.py`,
-`src/simulator/traffic.py`, `src/simulator/simulation.py`,
-`src/simulator/cli.py`, `src/telemetry/metrics.py`, and
-`src/telemetry/plot.py`.
+| Owner | Issues |
+|---|---|
+| Henry Morgan / HMSLU | Epic #2 and #5, #9, #10, #11 |
+| Adrian Wehlen | Epic #3 and #12, #13, #14, #15 |
 
-Epics #1, #2, and #3 aggregate the algorithm, simulator, and telemetry work above.
-Their children are implemented locally and can be completed after review and merge.
+The earlier full implementation and its tests/results are preserved on
+[codex/full-implementation-reference](https://github.com/mainuddinMains/network-flow-controller/tree/codex/full-implementation-reference).
+That branch is optional reference material, not completion of teammates' assigned
+issues or a replacement for their work.
 
-## Corrections to the original plan
+## Integration handoff
 
-- #16 requested src/__main__.py but required python -m src.simulator. Both entry
-  points now work, preserving the documented command.
-- The original feedback could not express triple duplicate ACKs. Optional
-  explicit recovery fields make that behavior possible.
-- RTT seconds convert to milliseconds in telemetry. Rate/throughput use
-  bytes/second; link bandwidth uses bits/second.
-- Branches sharing a commit need no repair; feature commits make them diverge.
-- Foundation tasks #4 and #5 are implemented and tested. The overdue milestone
-  can be completed after review/merge; future dates require a team schedule.
+The scoped branch includes both CLI entry points, a small orchestration wrapper,
+argument validation, and export delegation. It has no packet queue, scheduler,
+traffic generation, metric calculation, structured logger, or plotting
+implementation. CLI unit tests use recording doubles solely to verify wiring.
 
-## Validation
+The real five-flow tests require the teammate APIs and skip with the missing API
+names until those interfaces exist. Passing scoped CI is not proof that the
+end-to-end simulation is complete. See
+[integration-contract.md](integration-contract.md) for the proposed interface
+and completion criteria.
 
-The user approved new behavior test files before creation. Existing import tests
-and tests/conftest.py remain unchanged.
+## GitHub status
 
-```bash
-source .venv/bin/activate
-ruff check src/ tests/
-python -m pytest tests/ -v --cov=src --cov-report=term-missing
-python -m src.simulator --flows 5 --duration 30 --algorithm aimd --plots --output results/demo
-python -m src.telemetry.plot --input results/demo/run.csv
-```
-
-See [evaluation.md](evaluation.md) for measured results and
-[algorithm-design.md](algorithm-design.md) for assumptions and interfaces.
+PR #18 remains a draft. It references #16 and #17 as pending work and only requests
+automatic closure of completed algorithm tasks #4, #6, #7, and #8 on merge.
+Teammate issue assignments and milestone dates have not been changed.

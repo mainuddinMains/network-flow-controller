@@ -9,173 +9,134 @@ Saint Louis University · Computer Networks
 | Henry Morgan | Network simulator |
 | Adrian Wehlen | Telemetry & evaluation |
 
----
-
-## Overview
-
-This project implements a **network flow controller** that enforces congestion control policies across a simulated multi-node network topology. The goal of Track C is to design, implement, and evaluate a congestion control algorithm that adapts sending rates in response to observed network conditions (queue depth, packet loss, RTT), demonstrating measurable improvements in throughput-fairness trade-offs compared to a baseline.
-
-The controller is structured as three cooperating modules:
-
-```
-src/
-├── algorithm/    # Congestion control logic (AIMD, BBR-style, or custom)
-├── simulator/    # Packet-level network emulator (topology, queues, links)
-└── telemetry/    # Metrics collection, logging, and result export
-tests/            # Unit and integration tests
-docs/             # Design documents and experiment results
-```
-
----
-
-## Modules
-
-### `src/algorithm/`
-Implements the congestion control algorithm. Responsible for:
-- Maintaining per-flow state (congestion window, slow-start threshold, RTT estimates)
-- Reacting to loss signals and ECN marks from the simulator
-- Exposing a `step(feedback) -> send_rate` interface consumed by the simulator
-
-### `src/simulator/`
-Packet-level network emulator. Responsible for:
-- Modelling links with configurable bandwidth, propagation delay, and buffer size
-- Scheduling packet arrivals, drops, and ECN marks
-- Running multiple concurrent flows and delivering per-RTT feedback to the algorithm
-
-### `src/telemetry/`
-Metrics collection and result export. Responsible for:
-- Recording per-flow throughput, RTT, loss rate, and fairness (Jain's index) over time
-- Writing structured logs (CSV/JSON) for offline analysis
-- Generating summary statistics for the project report
-
----
-
-## Requirements
-
-- Python 3.10+
-- Dependencies listed in `requirements.txt` (populated as the project grows)
-
-Suggested packages (add to `requirements.txt` as used):
-
-```
-matplotlib       # plotting results
-numpy            # numerical helpers
-pytest           # test runner
-pytest-cov       # coverage reports
-```
-
----
+Run reproducible packet-level experiments with independent flows sharing one
+finite FIFO bottleneck. The AIMD baseline and Reno-style controller adapt their
+windows to loss and ECN. Telemetry exports throughput, RTT, loss, queue depth,
+and Jain's fairness to CSV, JSON, and optional PNG plots.
 
 ## Setup
 
-### 1. Clone the repository
+Python 3.10 or newer is required. From the repository root:
 
 ```bash
-git clone <repo-url>
-cd network-flow-controller
+python3 -m venv .venv
+source .venv/bin/activate
+# Windows: .venv\Scripts\activate
+python -m pip install -r requirements.txt
 ```
 
-### 2. Create and activate a virtual environment
+## Run an experiment
 
 ```bash
-python3 -m venv venv
-source venv/bin/activate        # macOS / Linux
-# venv\Scripts\activate.bat     # Windows
+python -m src.simulator --flows 5 --duration 60 --bandwidth 10Mbps --algorithm aimd --plots
 ```
 
-### 3. Install dependencies
+Duration is simulated time; the program does not sleep for that duration.
+`python -m src` provides the same interface. Run both commands from the repository
+root with the virtual environment activated.
 
-```bash
-pip install -r requirements.txt
-```
-
-### 4. Verify the environment
-
-```bash
-python -c "import src.algorithm, src.simulator, src.telemetry; print('OK')"
-```
-
----
-
-## Running the Simulation
-
-> Entry point will be added once core modules are implemented.
-
-Planned invocation:
-
-```bash
-python -m src.simulator --flows 5 --duration 60 --bandwidth 10Mbps --algorithm aimd
-```
-
-Key flags (subject to change):
-
-| Flag | Description | Default |
+| Flag | Meaning | Default |
 |---|---|---|
-| `--flows` | Number of concurrent TCP-like flows | `5` |
-| `--duration` | Simulation wall-time in seconds | `60` |
-| `--bandwidth` | Bottleneck link capacity | `10Mbps` |
-| `--delay` | One-way propagation delay | `20ms` |
-| `--buffer` | Router buffer size (packets) | `100` |
-| `--algorithm` | Congestion control variant (`aimd`, `bbr`, `custom`) | `aimd` |
-| `--output` | Directory for telemetry output | `./results/` |
+| `--flows` | Independent controlled flows | `5` |
+| `--duration` | Simulated seconds | `60` |
+| `--bandwidth` | Bits/second; accepts `10Mbps`, `100Kbps`, or a number | `10Mbps` |
+| `--delay` | One-way propagation delay; accepts `20ms` or seconds | `20ms` |
+| `--buffer` | Packets awaiting departure, including the packet in service | `100` |
+| `--algorithm` | `aimd` or `reno` | `aimd` |
+| `--output` | Destination for `run.csv` and `run.json` | `results/` |
+| `--seed` | Initial pacing, random loss, and jitter seed | `0` |
+| `--packet-size` | Payload bytes and controller MSS | `1500` |
+| `--start-times` | Comma-separated start times, one per flow | All zero |
+| `--cross-traffic` | Fixed background bits/second on the same link | `0` |
+| `--loss` | Independent drop probability, in addition to buffer drops | `0` |
+| `--jitter` | Maximum extra forward propagation delay | `0` |
+| `--ecn-threshold` | Mark above this fraction of buffer occupancy | `0.5` |
+| `--plots` | Save throughput, queue, and fairness PNGs | Off |
 
----
-
-## Running Tests
+Use separate output directories to preserve experiments:
 
 ```bash
+python -m src.simulator --duration 30 --algorithm aimd --seed 0 --output results/aimd
+python -m src.simulator --duration 30 --algorithm reno --seed 0 --output results/reno
+python -m src.simulator --flows 3 --duration 30 --start-times 0,5,10 --cross-traffic 1Mbps --loss 0.01 --jitter 2ms --output results/staggered
+```
+
+The CLI prints a JSON summary. CSV contains one observation per feedback
+interval per flow, including the final partial interval. JSON includes the same
+series grouped by flow ID, summary statistics, units, and configuration. Reusing
+an output directory replaces its run files.
+
+Plot an existing CSV:
+
+```bash
+python -m src.telemetry.plot --input results/aimd/run.csv
+```
+
+The noninteractive plots are saved beside the CSV in `plots/`.
+
+## Units and metrics
+
+- Control uses seconds, packets, and bytes/second.
+- Exported throughput is newly acknowledged unique payload bytes/second; RTT
+  is milliseconds; loss is a percentage of attempted transmissions.
+- Multiply throughput by eight to report bits/second.
+- Time-series fairness compares the latest rate of each active flow.
+- Summary fairness compares cumulative rates over each flow's own active
+  duration. Flows starting after the experiment ends are excluded from fairness
+  and have zero delivered bytes.
+- Retries do not count payload twice. Background traffic competes for capacity
+  but is excluded from controlled-flow telemetry.
+
+## Tests and CI
+
+```bash
+ruff check src/ tests/
 pytest tests/ -v
+python -m pytest tests/ --cov=src --cov-report=term-missing
 ```
 
-To include coverage:
+Pytest includes the repository root in its import path. CI installs dependencies
+using the selected interpreter, then runs lint and coverage tests on pushes and
+pull requests to main.
 
-```bash
-pytest tests/ --cov=src --cov-report=term-missing
+Behavior tests cover controllers, RTT estimation, recovery, queue service,
+drops, ECN, immutable feedback, reproducibility, staggered flows, cross-traffic,
+observer isolation, exports, plotting, and invalid CLI arguments. Integration
+tests run five flows for 30 simulated seconds with each controller, require
+fairness >= 0.9 and positive throughput for every flow, check matching nonempty
+CSV/JSON, and require execution under 30 wall-clock seconds.
+
+Follow [CLAUDE.md](CLAUDE.md) before creating or modifying test files.
+
+## Structure
+
+```text
+src/
+├── algorithm/controller.py   # Controllers, RTT estimation, state transitions
+├── simulator/
+│   ├── link.py               # Packets, FIFO service, ECN
+│   ├── traffic.py            # Independent flows and traffic sources
+│   ├── simulation.py         # Event scheduler, ACKs, per-RTT feedback
+│   └── cli.py                # Configuration and entry point
+└── telemetry/
+    ├── metrics.py            # Observer, fairness, CSV/JSON
+    └── plot.py               # Standalone PNG generation
+tests/                       # Behavior and integration tests
+docs/                        # Design, issue mapping, and measured results
 ```
 
----
+Controllers receive immutable feedback every estimated RTT. Telemetry only
+observes feedback and cannot change controller or simulator state. All random
+events use a local seeded RNG.
 
-## Project Structure
+This educational model uses one bottleneck, aggregate per-RTT feedback,
+individual packet delivery ACKs, and ideal per-round drop detection. It does not
+implement a full TCP stack, cumulative-ACK retransmission timers, ACK link
+serialization, or a multi-hop topology. Results apply to these assumptions.
 
-```
-network-flow-controller/
-├── src/
-│   ├── algorithm/
-│   │   └── __init__.py
-│   ├── simulator/
-│   │   └── __init__.py
-│   └── telemetry/
-│       └── __init__.py
-├── tests/
-├── docs/
-├── requirements.txt
-├── .gitignore
-└── README.md
-```
-
----
-
-## Evaluation Metrics
-
-The controller will be evaluated on the following criteria from the Mini Internet rubric:
-
-| Metric | Description |
-|---|---|
-| **Throughput** | Total bits delivered per second across all flows |
-| **Fairness** | Jain's fairness index across concurrent flows |
-| **RTT stability** | Variance in measured round-trip time |
-| **Loss rate** | Fraction of packets dropped at the bottleneck |
-| **Convergence time** | Time to reach steady-state after a new flow joins |
-
----
-
-## Design Notes
-
-- The simulator and algorithm communicate through a clean feedback interface so that different congestion control strategies can be swapped in without changing the simulator.
-- Telemetry is write-only from the simulator's perspective; the algorithm never reads telemetry state, keeping the control loop deterministic and reproducible.
-- All random events (packet loss, jitter) are seeded so experiments are repeatable.
-
----
+See [algorithm design](docs/algorithm-design.md),
+[issue solutions](docs/issue-solutions.md), and
+[evaluation results](docs/evaluation.md).
 
 ## License
 

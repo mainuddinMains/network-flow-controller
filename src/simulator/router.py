@@ -5,10 +5,10 @@ import struct
 LOCAL_HOST = "127.0.0.1"
 
 # Max size of a packet that the router can receive, in bytes.
-MAX_PACKET_SIZE_B = 1024
+# MAX_PACKET_SIZE_B = 1024
 
 # Max amount of bytes a payload can be, saving space for overhead.
-MAX_PAYLOAD_SIZE_B = 900
+# MAX_PAYLOAD_SIZE_B = 900
 
 # Universal header format
 HEADER_FORMAT = "!BBBHHH"
@@ -27,7 +27,7 @@ class Router:
         """
 
         # Meta configurations to use sockets.
-        self.meta_ip = LOCAL_HOST       # Host address to use real world socket infrastructure.
+        self.meta_ip = IP_ADDRESS       # Host address to use real world socket infrastructure.
         self.meta_port = int(PORT)           # Host port num to use real world socket infrastructure.
 
         # Router configurations
@@ -42,6 +42,7 @@ class Router:
         # Socket setup.
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.socket.bind((self.meta_ip, self.meta_port))
+        self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.buffer_size)
 
         # POTENTIALLY TEMPORARY LOGIC
         # This hardcodes usage of the local host address.
@@ -104,8 +105,8 @@ class Router:
 
         payload_bytes = str(payload).encode('utf-8')
 
-        if len(payload_bytes) > MAX_PACKET_SIZE_B:
-            print(f"Error from router {self.virtual_address}: Payload exceeds {MAX_PAYLOAD_SIZE_B} bytes ({len(payload_bytes)})")
+        # if len(payload_bytes) > MAX_PACKET_SIZE_B:
+        #     print(f"Error from router {self.virtual_address}: Payload exceeds {MAX_PAYLOAD_SIZE_B} bytes ({len(payload_bytes)})")
 
         datagram = header_bytes + payload_bytes
 
@@ -137,7 +138,7 @@ class Router:
 
         print(f"Router {self.virtual_address} has been given a packet to keep.\n"
               f"     len_payload={len(payload)}\n"
-              f"     payload={(payload_results[:10]) + ("..." if len(payload_results) > 10 else "")}\n")
+              f"     payload={(payload_results[:30]) + ('...' if len(payload_results) > 30 else '')}\n")
 
     def operation_loop(self):
         while True:

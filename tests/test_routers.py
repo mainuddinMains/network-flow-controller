@@ -10,7 +10,6 @@ def test_routers():
     from src.simulator import router_builder
     from pathlib import Path
     from multiprocessing import Process
-    from multiprocessing import Pool
     import time
 
     "1.) Get router configuration files"
@@ -36,7 +35,7 @@ def test_routers():
     pD.start()
     pE.start()
 
-    time.sleep(0.5)
+    time.sleep(2.5)
 
     data = local_router_start._create_datagram(
         TTL=100,
@@ -51,7 +50,7 @@ def test_routers():
     "As the start router is controlled manually, it will not log being ready to receive a packet."
     local_router_start._send_datagram(datagram=data, end_destination=5)
 
-    time.sleep(0.5)
+    time.sleep(2.5)
 
     "There may be a ConnectionResetError as the threads are closed."
     pB.terminate()

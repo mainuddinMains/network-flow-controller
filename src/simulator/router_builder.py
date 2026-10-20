@@ -1,9 +1,10 @@
 import configparser
 from pathlib import Path
+
 from src.simulator.router import Router
 
 
-def build_router_from_ini(file_path : Path) -> Router:
+def build_router_from_ini(file_path: Path) -> Router:
     print()
 
     reader = configparser.ConfigParser()
@@ -12,12 +13,24 @@ def build_router_from_ini(file_path : Path) -> Router:
 
     # Pre-parsing of multi-line entries
     # Neighbor list
-    neighbor_list = [int(neighbor.strip()) for neighbor in reader['routing']['neighbors'] if neighbor.strip()]
+    neighbor_list = [
+        int(neighbor.strip())
+        for neighbor in reader['routing']['neighbors']
+        if neighbor.strip()
+    ]
 
     # Forwarding table
-    destinations = [int(dest.strip()) for dest in reader['routing']['destinations'] if dest.strip()]
-    local_forwards=[int(dest.strip()) for dest in reader['routing']['local_forwarding'] if dest.strip()]
-    forwarding_table = dict(zip(destinations,local_forwards))
+    destinations = [
+        int(dest.strip())
+        for dest in reader['routing']['destinations']
+        if dest.strip()
+    ]
+    local_forwards = [
+        int(dest.strip())
+        for dest in reader['routing']['local_forwarding']
+        if dest.strip()
+    ]
+    forwarding_table = dict(zip(destinations, local_forwards))
 
     built_link = Router(
         IP_ADDRESS=reader['metadata']['HOST'],

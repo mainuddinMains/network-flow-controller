@@ -7,10 +7,11 @@ def operate_router(router_config_path):
     router.operation_loop()
 
 def test_routers():
-    from src.simulator import router_builder
-    from pathlib import Path
-    from multiprocessing import Process
     import time
+    from multiprocessing import Process
+    from pathlib import Path
+
+    from src.simulator import router_builder
 
     "1.) Get router configuration files"
     root = Path.cwd().parent
@@ -47,7 +48,8 @@ def test_routers():
         payload="Test payload."
     )
 
-    "As the start router is controlled manually, it will not log being ready to receive a packet."
+    # As the start router is controlled manually, it will not log being ready
+    # to receive a packet.
     local_router_start._send_datagram(datagram=data, end_destination=5)
 
     time.sleep(2.5)

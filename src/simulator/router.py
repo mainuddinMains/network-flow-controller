@@ -1,7 +1,8 @@
 import socket
 import struct
 
-# Use one universal local hosting address, as we assume that our mini internet is run on one device.
+# Use one universal local hosting address, as we assume that our mini internet
+# is run on one device.
 LOCAL_HOST = "127.0.0.1"
 
 # Max size of a packet that the router can receive, in bytes.
@@ -15,7 +16,10 @@ HEADER_FORMAT = "!BBBHHH"
 HEADER_SIZE = struct.calcsize(HEADER_FORMAT)
 
 class Router:
-    def __init__(self, IP_ADDRESS, PORT, virtual_address, bandwidth, buffer_size, neighbors : list, forwarding_table : dict):
+    def __init__(
+        self, IP_ADDRESS, PORT, virtual_address, bandwidth, buffer_size,
+        neighbors: list, forwarding_table: dict,
+    ):
         """
         :param IP_ADDRESS:
         :param PORT:
@@ -27,8 +31,8 @@ class Router:
         """
 
         # Meta configurations to use sockets.
-        self.meta_ip = IP_ADDRESS       # Host address to use real world socket infrastructure.
-        self.meta_port = int(PORT)           # Host port num to use real world socket infrastructure.
+        self.meta_ip = IP_ADDRESS    # Host address for socket infrastructure.
+        self.meta_port = int(PORT)   # Host port for real world socket infrastructure.
 
         # Router configurations
         self.bandwidth = float(bandwidth)      # In Mbps
@@ -37,7 +41,8 @@ class Router:
         self.virtual_address = int(virtual_address)  # An integer.
 
         self.neighboring_sockets = neighbors.copy() # As a list of virtual addresses.
-        self.forwarding_table = forwarding_table.copy() # As a dictionary of packet_destination : next router.
+        # As a dictionary of packet_destination : next router.
+        self.forwarding_table = forwarding_table.copy()
 
         # Socket setup.
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -47,7 +52,10 @@ class Router:
         # POTENTIALLY TEMPORARY LOGIC
         # This hardcodes usage of the local host address.
         # This also hardcodes the port convention of 60000+virtual_address
-        self.address_to_real_dest_map = {neighbor: (LOCAL_HOST, 60000 + neighbor) for neighbor in self.neighboring_sockets}
+        self.address_to_real_dest_map = {
+            neighbor: (LOCAL_HOST, 60000 + neighbor)
+            for neighbor in self.neighboring_sockets
+        }
 
         print("Router initialized.\n"
               f"     meta_ip={self.meta_ip}\n"
@@ -84,7 +92,9 @@ class Router:
 
         return header, payload
 
-    def _create_datagram(self, TTL, type_flags, reserve, identifier, source, destination, payload):
+    def _create_datagram(
+        self, TTL, type_flags, reserve, identifier, source, destination, payload
+    ):
         """
         :param TTL: Time to live. 0-255
         :param type_flags: 8 bit value.
@@ -106,11 +116,16 @@ class Router:
         payload_bytes = str(payload).encode('utf-8')
 
         # if len(payload_bytes) > MAX_PACKET_SIZE_B:
-        #     print(f"Error from router {self.virtual_address}: Payload exceeds {MAX_PAYLOAD_SIZE_B} bytes ({len(payload_bytes)})")
+        #     print(f"Error from router {self.virtual_address}: "
+        #           f"Payload exceeds {MAX_PAYLOAD_SIZE_B} bytes "
+        #           f"({len(payload_bytes)})")
 
         datagram = header_bytes + payload_bytes
 
-        print(f"Router {self.virtual_address} created a packet.\n     bytes={len(datagram)}")
+        print(
+            f"Router {self.virtual_address} created a packet.\n"
+            f"     bytes={len(datagram)}"
+        )
 
         return datagram
 
@@ -130,15 +145,18 @@ class Router:
         """
         :param payload: The datagram to keep and act on.
 
-        Currently a dummy function that just logs the payload, as no functionality as been implemented that would require
-        a router to keep a datagram.
+        Currently a dummy function that just logs the payload, as no functionality
+        has been implemented that would require a router to keep a datagram.
         """
 
         payload_results = payload.decode('utf-8')
 
-        print(f"Router {self.virtual_address} has been given a packet to keep.\n"
-              f"     len_payload={len(payload)}\n"
-              f"     payload={(payload_results[:30]) + ('...' if len(payload_results) > 30 else '')}\n")
+        truncated = payload_results[:30] + ("..." if len(payload_results) > 30 else "")
+        print(
+            f"Router {self.virtual_address} has been given a packet to keep.\n"
+            f"     len_payload={len(payload)}\n"
+            f"     payload={truncated}\n"
+        )
 
     def operation_loop(self):
         while True:

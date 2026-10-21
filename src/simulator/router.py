@@ -136,6 +136,7 @@ class Router:
         self.overflow_drops = 0
         self.malformed_drops = 0
         self.no_route_drops = 0
+        self.ttl_expired_drops = 0
 
         self._logger = get_device_logger(f"router-{self.virtual_address}")
         self._log_event(
@@ -361,6 +362,7 @@ class Router:
         # Hop limit rule:
         # If the TTL of a received packet is 0 or less, drop it.
         if head["TTL"] <= 0:
+            self.ttl_expired_drops += 1
             self._log_event(
                 "drop",
                 _level=logging.WARNING,
@@ -370,6 +372,7 @@ class Router:
                 src=head["source"],
                 dest=head["destination"],
                 ttl=head["TTL"],
+                ttl_expired_drops=self.ttl_expired_drops,
             )
             return
 

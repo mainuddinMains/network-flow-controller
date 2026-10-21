@@ -25,7 +25,10 @@ HEADER_FORMAT = "!BBBHHH"
 HEADER_SIZE = struct.calcsize(HEADER_FORMAT)
 
 # Default inbound queue capacity (datagrams). Overflow drops are logged.
-DEFAULT_INBOUND_QUEUE_SIZE = 32
+# 128 absorbs bursts that back up behind the blocking per-packet delay in
+# _send_datagram; at 32 a 20-probe bidirectional exchange overflowed even
+# with zero configured loss (issue #32).
+DEFAULT_INBOUND_QUEUE_SIZE = 128
 
 # How long recvfrom / queue.get wait before re-checking the stop flag.
 _SOCKET_TIMEOUT_S = 1.0

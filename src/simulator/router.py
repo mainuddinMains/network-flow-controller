@@ -1,5 +1,7 @@
-"""UDP router with concurrent receive and forward workers."""
+"""UDP router with concurrent receive, forward, and delayed-delivery workers."""
 
+import heapq
+import itertools
 import logging
 import queue
 import random
@@ -9,9 +11,6 @@ import threading
 import time
 
 from src.telemetry.netlog import format_event, get_device_logger
-
-# TODO: Replace global seed with a random seed that is logged at the beginning of the run.
-random.seed(42)
 
 # Use one universal local hosting address, as we assume that our mini internet
 # is run on one device.
@@ -32,9 +31,9 @@ HEADER_FORMAT = "!BBBHHH"
 HEADER_SIZE = struct.calcsize(HEADER_FORMAT)
 
 # Default inbound queue capacity (datagrams). Overflow drops are logged.
-# 128 absorbs bursts that back up behind the blocking per-packet delay in
-# _send_datagram; at 32 a 20-probe bidirectional exchange overflowed even
-# with zero configured loss (issue #32).
+# Delayed delivery is handled by a nonblocking scheduler (issue #34), so the
+# queue only has to absorb short receive bursts, not packets stuck behind a
+# sleeping forwarder.
 DEFAULT_INBOUND_QUEUE_SIZE = 128
 
 # How long recvfrom / queue.get wait before re-checking the stop flag.
@@ -75,6 +74,8 @@ class Router:
         delays: dict,
         loss,
         inbound_queue_size: int = DEFAULT_INBOUND_QUEUE_SIZE,
+        link_loss: dict | None = None,
+        seed: int | None = None,
     ):
         """
         :param IP_ADDRESS: Real IP address the router's socket binds to.
@@ -85,8 +86,14 @@ class Router:
         :param neighbors: Virtual addresses of directly connected devices.
         :param forwarding_table: Maps destination address -> next-hop neighbor.
         :param delays: Maps neighbor address -> added delay, in seconds.
-        :param loss: Probability (0-1) that a sent packet is dropped.
+        :param loss: Default probability (0-1) that a sent packet is dropped.
         :param inbound_queue_size: Max datagrams waiting for the forwarder.
+        :param link_loss: Optional map of neighbor address -> loss probability
+            for that directed link, overriding ``loss`` on that link only.
+        :param seed: Optional seed for this router's random loss decisions.
+            When omitted, a seed is generated and recorded so the run can be
+            reproduced; the seed in use is always logged and kept on
+            ``self.seed``.
         """
 
         # Meta configuration used by the real-world socket infrastructure.
@@ -98,6 +105,19 @@ class Router:
         self.buffer_size = int(buffer_size)  # In bytes.
         self.virtual_address = int(virtual_address)
         self.loss_chance = float(loss)
+
+        # Per-link (directed, by next-hop neighbor) loss overrides.
+        self.link_loss = {
+            int(neighbor): float(chance)
+            for neighbor, chance in (link_loss or {}).items()
+        }
+
+        # Reproducible randomness: every loss decision draws from this
+        # router-local generator, and the seed is recorded and logged.
+        if seed is None:
+            seed = random.SystemRandom().getrandbits(32)
+        self.seed = int(seed)
+        self._rng = random.Random(self.seed)
 
         # Virtual addresses of neighboring devices.
         self.neighboring_sockets = neighbors.copy()
@@ -127,16 +147,30 @@ class Router:
             for neighbor in self.neighboring_sockets
         }
 
-        # Concurrency: one receiver, one forwarder, bounded inbound queue.
+        # Concurrency: one receiver, one forwarder, one delayed-delivery
+        # scheduler, bounded inbound queue.
         self._stop_event = threading.Event()
         self._inbound = queue.Queue(maxsize=inbound_queue_size)
         self._send_lock = threading.Lock()
         self._receiver_thread: threading.Thread | None = None
         self._forwarder_thread: threading.Thread | None = None
+        self._delivery_thread: threading.Thread | None = None
+
+        # Delayed-delivery schedule: (due_monotonic, seq, datagram, header).
+        # The seq tie-breaker keeps heap ordering FIFO for equal due times.
+        self._delay_heap: list = []
+        self._delay_cond = threading.Condition()
+        self._delay_seq = itertools.count()
+
         self.overflow_drops = 0
         self.malformed_drops = 0
         self.no_route_drops = 0
         self.ttl_expired_drops = 0
+        # Injected random-loss drops, kept separate from the drop counters
+        # above so experiments can tell configured loss from other causes.
+        self.loss_drops = 0
+        # Packets that were scheduled with a positive link delay.
+        self.delayed_sends = 0
 
         self._logger = get_device_logger(f"router-{self.virtual_address}")
         self._log_event(
@@ -150,6 +184,8 @@ class Router:
             buffer_size=self.buffer_size,
             inbound_queue_size=inbound_queue_size,
             loss_chance=self.loss_chance,
+            link_loss=self.link_loss,
+            seed=self.seed,
         )
 
     def _log_event(self, event: str, _level: int = logging.INFO, **fields) -> None:
@@ -245,11 +281,75 @@ class Router:
     # ------------------------------------------------------------------
     # Sending and keeping datagrams
     # ------------------------------------------------------------------
-    def _send_datagram(self, datagram, header):
-        """Forward one datagram described by ``header`` toward its next hop.
+    def _link_loss_chance(self, forward) -> float:
+        """Return the loss probability for the directed link to ``forward``."""
+        return self.link_loss.get(forward, self.loss_chance)
 
-        ``header`` carries the already-decremented TTL so the logged value
-        matches the datagram on the wire.
+    def _schedule_send(self, datagram, end_destination) -> None:
+        """Schedule ``datagram`` for delivery after the next hop's link delay.
+
+        Runs on the forwarder thread and never sleeps: the datagram is
+        placed on the delayed-delivery heap and the scheduler thread
+        transmits it when its due time arrives, so a delayed packet cannot
+        block unrelated packets from being processed.
+        """
+        header, _ = self._interpret_datagram(datagram)
+        packet = {
+            "id": header["identifier"],
+            "type": _packet_type(header["type_flags"]),
+            "src": header["source"],
+            "dest": end_destination,
+            "ttl": header["TTL"],
+        }
+        forward = self.forwarding_table.get(end_destination)
+        if forward is None:
+            self.no_route_drops += 1
+            self._log_event(
+                "drop",
+                _level=logging.WARNING,
+                reason="no_route",
+                **packet,
+                no_route_drops=self.no_route_drops,
+            )
+            return
+
+        if forward not in self.address_to_real_dest_map:
+            self.no_route_drops += 1
+            self._log_event(
+                "drop",
+                _level=logging.WARNING,
+                reason="next_hop_not_neighbor",
+                next_hop=forward,
+                **packet,
+                no_route_drops=self.no_route_drops,
+            )
+            return
+
+        delay = max(0.0, float(self.delays.get(forward, 0.0)))
+        due = time.monotonic() + delay
+        if delay > 0:
+            self.delayed_sends += 1
+            self._log_event(
+                "delay",
+                next_hop=forward,
+                delay_s=delay,
+                delayed_sends=self.delayed_sends,
+                **packet,
+            )
+
+        with self._delay_cond:
+            heapq.heappush(
+                self._delay_heap,
+                (due, next(self._delay_seq), datagram, header),
+            )
+            self._delay_cond.notify()
+
+    def _send_datagram(self, datagram, header):
+        """Apply the loss decision and transmit ``datagram`` to its next hop.
+
+        Runs on the delayed-delivery scheduler thread once the link delay
+        has elapsed. Contains no sleeps. The header carries the decremented
+        TTL so the logged value matches the datagram on the wire.
         """
         end_destination = header["destination"]
         packet = {
@@ -285,21 +385,20 @@ class Router:
             )
             return
 
-        # Simulated transmission delay (runs on the forwarder thread only).
-        # TODO: sleep() must be replaced with a non-blocking delay.
-        delay = self.delays[forward]
-        time.sleep(delay)
-
-        # Simulated random loss.
-        # TODO: Replace global loss with per-link loss. Low priority.
-        if random.random() < self.loss_chance:
+        delay = max(0.0, float(self.delays.get(forward, 0.0)))
+        # Simulated random loss, drawn from this router's seeded generator.
+        # A 0.0 chance can never drop because random() < 0.0 is never true.
+        loss_chance = self._link_loss_chance(forward)
+        if self._rng.random() < loss_chance:
+            self.loss_drops += 1
             self._log_event(
                 "drop",
                 _level=logging.WARNING,
                 reason="injected_loss",
                 next_hop=forward,
                 delay_s=delay,
-                loss_chance=self.loss_chance,
+                loss_chance=loss_chance,
+                loss_drops=self.loss_drops,
                 **packet,
             )
             return
@@ -387,11 +486,46 @@ class Router:
             payload,
         )
 
-        self._send_datagram(datagram, {**head, "TTL": head["TTL"] - 1})
+        self._schedule_send(datagram, head["destination"])
 
     # ------------------------------------------------------------------
     # Concurrent workers
     # ------------------------------------------------------------------
+    def delivery_loop(self) -> None:
+        """Transmit scheduled datagrams once their link delay has elapsed."""
+        while True:
+            with self._delay_cond:
+                while not self._delay_heap and not self._stop_event.is_set():
+                    self._delay_cond.wait(timeout=_QUEUE_GET_TIMEOUT_S)
+                if self._stop_event.is_set():
+                    return
+
+                now = time.monotonic()
+                due = self._delay_heap[0][0]
+                if due > now:
+                    # Sleep inside the condition so a nearer deadline or
+                    # shutdown can interrupt the wait.
+                    self._delay_cond.wait(timeout=due - now)
+                    continue
+                _, _, datagram, header = heapq.heappop(
+                    self._delay_heap
+                )
+
+            try:
+                self._send_datagram(datagram, header)
+            except Exception as exc:  # Keep the scheduler alive on bad sends.
+                self._log_event(
+                    "error",
+                    _level=logging.ERROR,
+                    reason="delivery_failed",
+                    id=header["identifier"],
+                    type=_packet_type(header["type_flags"]),
+                    src=header["source"],
+                    dest=header["destination"],
+                    ttl=header["TTL"],
+                    error=repr(exc),
+                )
+
     def listening_loop(self) -> None:
         """Receive, validate, and enqueue UDP datagrams for the forwarder."""
         while not self._stop_event.is_set():
@@ -471,7 +605,7 @@ class Router:
                 self._inbound.task_done()
 
     def start(self) -> None:
-        """Start the receiver and forwarder workers if they are not running."""
+        """Start the receiver, forwarder, and delivery workers if needed."""
         if (
             self._receiver_thread is not None
             and self._receiver_thread.is_alive()
@@ -489,19 +623,33 @@ class Router:
             name=f"router-{self.virtual_address}-forwarder",
             daemon=True,
         )
+        self._delivery_thread = threading.Thread(
+            target=self.delivery_loop,
+            name=f"router-{self.virtual_address}-delivery",
+            daemon=True,
+        )
         self._receiver_thread.start()
         self._forwarder_thread.start()
+        self._delivery_thread.start()
         self._log_event("start")
 
     def shutdown(self, join_timeout: float = 2.0) -> None:
         """Stop workers and close the socket so the bind port is released."""
         self._stop_event.set()
+        # Wake the delivery scheduler so it notices the stop flag.
+        with self._delay_cond:
+            self._delay_cond.notify_all()
         try:
             self.socket.close()
         except OSError:
             pass
 
-        for worker in (self._receiver_thread, self._forwarder_thread):
+        workers = (
+            self._receiver_thread,
+            self._forwarder_thread,
+            self._delivery_thread,
+        )
+        for worker in workers:
             if worker is not None and worker.is_alive():
                 worker.join(timeout=join_timeout)
 

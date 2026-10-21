@@ -91,11 +91,13 @@ def _router(loss=0.0):
         forwarding_table={5: 4},
         delays={4: 0.0},
         loss=loss,
+        seed=1,
     )
     peer = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     peer.bind(("127.0.0.1", 0))
     peer.settimeout(0.3)
     router.address_to_real_dest_map = {4: peer.getsockname()}
+    router.start()
     return router, peer
 
 

@@ -601,8 +601,8 @@ class Host:
 
         self._log_event("start")
 
-        # TODO: Write new host messaging protocol. This code below relies on the "input" function, which, while
-        # functional for manual testing, wouldn't work with tests containing many simulated "users".
+        # TODO: Write new host messaging protocol. The "input" function works
+        # for manual testing, but not tests with many simulated "users".
         while not self._stop_event.is_set():
             try:
                 line = input("> ").strip()

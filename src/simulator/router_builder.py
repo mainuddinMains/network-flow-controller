@@ -11,6 +11,11 @@ def _parse_int_list(value: str) -> list[int]:
     return [int(part) for part in value.split() if part]
 
 
+def _parse_float_list(value: str) -> list[float]:
+    """Split a multi-line or space-separated config value into floats."""
+    return [float(part) for part in value.split() if part]
+
+
 def build_router_from_ini(file_path: Path) -> Router:
     """Load router settings from ``file_path`` and return a configured Router.
 
@@ -37,6 +42,24 @@ def build_router_from_ini(file_path: Path) -> Router:
         for neighbor, milliseconds in zip(neighbor_list, delay_ms)
     }
 
+    # Optional per-link loss overrides: one probability per neighbor, in the
+    # same order as ``routing.neighbors``. Omitted means the router-wide
+    # ``loss.loss_chance`` applies to every link.
+    link_loss: dict[int, float] = {}
+    raw_link_loss = reader["loss"].get("link_loss")
+    if raw_link_loss:
+        link_loss_values = _parse_float_list(raw_link_loss)
+        if len(link_loss_values) != len(neighbor_list):
+            raise ValueError(
+                "loss.link_loss must provide one probability per neighbor"
+            )
+        link_loss = dict(zip(neighbor_list, link_loss_values))
+
+    # Optional seed for reproducible loss decisions. Omitted means the router
+    # generates one and logs it at startup.
+    raw_seed = reader["loss"].get("seed")
+    seed = int(raw_seed) if raw_seed else None
+
     return Router(
         IP_ADDRESS=reader["metadata"]["HOST"],
         PORT=int(reader["metadata"]["PORT"]),
@@ -47,4 +70,6 @@ def build_router_from_ini(file_path: Path) -> Router:
         forwarding_table=forwarding_table,
         delays=delays,
         loss=float(reader["loss"]["loss_chance"]),
+        link_loss=link_loss,
+        seed=seed,
     )

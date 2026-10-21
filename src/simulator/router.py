@@ -149,6 +149,7 @@ class Router:
         self.overflow_drops = 0
         self.malformed_drops = 0
         self.no_route_drops = 0
+        self.ttl_expired_drops = 0
         # Injected random-loss drops, kept separate from the drop counters
         # above so experiments can tell configured loss from other causes.
         self.loss_drops = 0
@@ -274,10 +275,28 @@ class Router:
         forward = self.forwarding_table.get(end_destination)
         if forward is None:
             self.no_route_drops += 1
+            head, _ = self._interpret_datagram(datagram)
             self._log(
                 f"Router {self.virtual_address} dropped a packet: "
                 f"no route to destination {end_destination} "
                 f"(no_route_drops={self.no_route_drops}).\n"
+                f"     id={head['identifier']}\n"
+                f"     src={head['source']}\n"
+                f"     ttl={head['TTL']}\n"
+            )
+            return
+
+        if forward not in self.address_to_real_dest_map:
+            self.no_route_drops += 1
+            head, _ = self._interpret_datagram(datagram)
+            self._log(
+                f"Router {self.virtual_address} dropped a packet: "
+                f"next hop {forward} for destination {end_destination} "
+                f"is not a configured neighbor "
+                f"(no_route_drops={self.no_route_drops}).\n"
+                f"     id={head['identifier']}\n"
+                f"     src={head['source']}\n"
+                f"     ttl={head['TTL']}\n"
             )
             return
 
@@ -310,21 +329,29 @@ class Router:
         forward = self.forwarding_table.get(end_destination)
         if forward is None:
             self.no_route_drops += 1
+            head, _ = self._interpret_datagram(datagram)
             self._log(
                 f"Router {self.virtual_address} dropped a packet: "
                 f"no route to destination {end_destination} "
                 f"(no_route_drops={self.no_route_drops}).\n"
+                f"     id={head['identifier']}\n"
+                f"     src={head['source']}\n"
+                f"     ttl={head['TTL']}\n"
             )
             return
 
         dest = self.address_to_real_dest_map.get(forward)
         if dest is None:
             self.no_route_drops += 1
+            head, _ = self._interpret_datagram(datagram)
             self._log(
                 f"Router {self.virtual_address} dropped a packet: "
                 f"next hop {forward} for destination {end_destination} "
                 f"is not a configured neighbor "
                 f"(no_route_drops={self.no_route_drops}).\n"
+                f"     id={head['identifier']}\n"
+                f"     src={head['source']}\n"
+                f"     ttl={head['TTL']}\n"
             )
             return
 
@@ -397,9 +424,14 @@ class Router:
         # Hop limit rule:
         # If the TTL of a received packet is 0 or less, drop it.
         if head["TTL"] <= 0:
+            self.ttl_expired_drops += 1
             self._log(
-                f"Router {self.virtual_address} dropped an expired packet.\n"
-                f"     src={head['source']}"
+                f"Router {self.virtual_address} dropped an expired packet "
+                f"(ttl_expired_drops={self.ttl_expired_drops}).\n"
+                f"     id={head['identifier']}\n"
+                f"     src={head['source']}\n"
+                f"     dest={head['destination']}\n"
+                f"     ttl={head['TTL']}\n"
             )
             return
 

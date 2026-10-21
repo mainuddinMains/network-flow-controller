@@ -1,5 +1,7 @@
 """Unit tests for src/simulator/."""
 
+import pytest
+
 
 def test_simulator_module_imports():
     """Verify the simulator module is importable."""
@@ -12,6 +14,14 @@ def operate_router(router_config_path):
     router = router_builder.build_router_from_ini(router_config_path)
     router.operation_loop()
 
+
+@pytest.mark.xfail(
+    reason=(
+        "Incomplete hosts-branch mesh test: undefined local_router_start/pE "
+        "and wrong config path (cwd.parent); see Issue #25 / follow-up"
+    ),
+    strict=False,
+)
 def test_network():
     import time
     from multiprocessing import Process

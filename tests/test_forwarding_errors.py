@@ -109,8 +109,9 @@ def test_ttl_expired_drop_log_identifies_packet(quiet_router, capsys):
         _pack_datagram(ttl=0, identifier=321, source=7, destination=5)
     )
 
-    output = capsys.readouterr().out
-    assert "Router 1 dropped an expired packet" in output
+    output = capsys.readouterr().err
+    assert "netlog.router-1" in output
+    assert "reason=ttl_expired" in output
     assert "id=321" in output
     assert "src=7" in output
     assert "dest=5" in output
@@ -175,9 +176,10 @@ def test_no_route_drop_log_identifies_packet(quiet_router, capsys):
     )
 
     assert router.no_route_drops == 1
-    output = capsys.readouterr().out
-    assert "no route to destination 99" in output
-    assert "Router 1" in output
+    output = capsys.readouterr().err
+    assert "reason=no_route" in output
+    assert "dest=99" in output
+    assert "netlog.router-1" in output
     assert "id=55" in output
     assert "src=3" in output
     assert "ttl=8" in output  # Decremented once before the routing lookup.
@@ -193,9 +195,10 @@ def test_invalid_next_hop_drop_log_identifies_packet(quiet_router, capsys):
     )
 
     assert router.no_route_drops == 1
-    output = capsys.readouterr().out
-    assert "next hop 9 for destination 7" in output
-    assert "not a configured neighbor" in output
+    output = capsys.readouterr().err
+    assert "reason=next_hop_not_neighbor" in output
+    assert "next_hop=9" in output
+    assert "dest=7" in output
     assert "id=77" in output
     assert "src=4" in output
     assert "ttl=8" in output

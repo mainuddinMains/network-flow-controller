@@ -412,32 +412,105 @@ def test_schedule_send_returns_before_the_delay_elapses(forward_peer):
     assert time.perf_counter() - started >= delay * 0.85
 
 
-def test_drop_and_delay_logs_are_distinguishable(forward_peer):
-    """Injected drops and delayed delivery are logged as different events."""
-    router, _peer, router_port = forward_peer
-    router.loss_chance = 1.0
+@pytest.mark.parametrize("loss", [0.0, 1.0])
+@pytest.mark.parametrize("type_flags, packet_type", [(1, "echo"), (2, "reply")])
+def test_drop_and_delay_logs_are_distinguishable(
+    forward_peer, capsys, loss, type_flags, packet_type
+):
+    """Delay and send/drop events retain packet identity and the wire TTL."""
+    router, peer, router_port = forward_peer
+    router.loss_chance = loss
     router.delays[2] = 0.05
-    messages: list[str] = []
-
-    def capture(message: str) -> None:
-        messages.append(message)
-
-    router._log = capture  # type: ignore[method-assign]
     client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
         client.sendto(
-            _pack_datagram(identifier=4),
+            _pack_datagram(identifier=4, ttl=8, type_flags=type_flags),
             ("127.0.0.1", router_port),
         )
-        assert _wait_until(lambda: router.loss_drops >= 1)
+        if loss:
+            assert _wait_until(lambda: router.loss_drops == 1)
+            assert _recv_identifier(peer, 0.2) is None
+        else:
+            assert _recv_identifier(peer, 1.0) == 4
     finally:
         client.close()
+        router.shutdown()
 
-    combined = "\n".join(messages)
-    assert "delayed a packet" in combined
-    assert "injected random loss" in combined
+    lines = capsys.readouterr().err.splitlines()
+    delayed = [line for line in lines if "event=delay " in line]
+    event = "drop" if loss else "forward"
+    outcomes = [line for line in lines if f"event={event} " in line]
+    assert len(delayed) == len(outcomes) == 1
+    for line in delayed + outcomes:
+        for field in (
+            "netlog.router-1",
+            "id=4",
+            f"type={packet_type}",
+            "src=0",
+            "dest=5",
+            "next_hop=2",
+            "ttl=7",
+            "delay_s=0.05",
+        ):
+            assert field in line
+        assert line.count("event=") == 1
+    if loss:
+        assert "reason=injected_loss" in outcomes[0]
+        assert "loss_drops=1" in outcomes[0]
+        assert not any("event=forward " in line for line in lines)
+    else:
+        assert not any("event=drop " in line for line in lines)
     assert router.delayed_sends == 1
-    assert router.loss_drops == 1
+    assert router.loss_drops == int(loss)
+
+
+def test_shutdown_interrupts_pending_delivery(forward_peer):
+    """Shutdown wakes a scheduler waiting on a distant delivery deadline."""
+    router, peer, _router_port = forward_peer
+    router.delays[2] = 30.0
+    router._schedule_send(_pack_datagram(identifier=8), 5)
+
+    started = time.monotonic()
+    router.shutdown()
+
+    assert time.monotonic() - started < 3.0
+    assert not router._delivery_thread.is_alive()
+    assert not router._forwarder_thread.is_alive()
+    assert not router._receiver_thread.is_alive()
+    assert _recv_identifier(peer, 0.1) is None
+
+
+def test_delivery_failure_is_logged_and_worker_recovers(
+    forward_peer, monkeypatch, capsys
+):
+    """A failed send logs packet details without stopping later delivery."""
+    router, peer, _router_port = forward_peer
+    original_send = router._send_datagram
+
+    def fail_first(datagram, header):
+        if header["identifier"] == 9:
+            raise OSError("simulated send failure")
+        original_send(datagram, header)
+
+    monkeypatch.setattr(router, "_send_datagram", fail_first)
+    router._process_datagram(_pack_datagram(identifier=9, ttl=8))
+    router._process_datagram(_pack_datagram(identifier=10, ttl=8))
+
+    assert _recv_identifier(peer, 1.0) == 10
+    assert router._delivery_thread.is_alive()
+    lines = capsys.readouterr().err.splitlines()
+    errors = [line for line in lines if "event=error " in line]
+    assert len(errors) == 1
+    for field in (
+        "reason=delivery_failed",
+        "id=9",
+        "type=data",
+        "src=0",
+        "dest=5",
+        "ttl=7",
+        "simulated send failure",
+    ):
+        assert field in errors[0]
 
 
 def test_builder_reads_link_loss_and_seed(tmp_path: Path):
@@ -488,8 +561,8 @@ def test_builder_reads_link_loss_and_seed(tmp_path: Path):
         router.shutdown()
 
 
-def test_builder_without_seed_records_a_generated_seed(tmp_path: Path):
-    """Omitting the seed still records the generated seed on the router."""
+def test_builder_without_seed_records_a_generated_seed(tmp_path: Path, capsys):
+    """Omitting the seed still records and logs the generated router seed."""
     port = _free_udp_port()
     config_path = tmp_path / "router.ini"
     config_path.write_text(
@@ -522,5 +595,8 @@ def test_builder_without_seed_records_a_generated_seed(tmp_path: Path):
     try:
         assert isinstance(router.seed, int)
         assert router.link_loss == {}
+        output = capsys.readouterr().err
+        assert "event=init " in output
+        assert f"seed={router.seed}" in output
     finally:
         router.shutdown()

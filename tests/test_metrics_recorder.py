@@ -36,9 +36,15 @@ def test_record_computes_throughput_rtt_ms_and_loss_percent():
 def test_multi_flow_snapshot_and_per_flow_history():
     """Track independent flows and expose snapshot keyed by flow ID."""
     recorder = MetricsRecorder()
-    recorder.record(1.0, 0, _feedback(bytes_acked=1000, packets_dropped=0), interval=1.0)
-    recorder.record(1.5, 1, _feedback(bytes_acked=2000, packets_dropped=2), interval=0.5)
-    recorder.record(2.0, 0, _feedback(bytes_acked=4000, packets_dropped=0), interval=1.0)
+    recorder.record(
+        1.0, 0, _feedback(bytes_acked=1000, packets_dropped=0), interval=1.0
+    )
+    recorder.record(
+        1.5, 1, _feedback(bytes_acked=2000, packets_dropped=2), interval=0.5
+    )
+    recorder.record(
+        2.0, 0, _feedback(bytes_acked=4000, packets_dropped=0), interval=1.0
+    )
 
     snap = recorder.snapshot()
     assert set(snap) == {0, 1}

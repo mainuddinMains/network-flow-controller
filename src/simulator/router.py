@@ -1,14 +1,13 @@
-"""UDP router with concurrent receive and forward workers."""
+"""UDP router with concurrent receive, forward, and delayed-delivery workers."""
 
+import heapq
+import itertools
 import queue
 import random
 import socket
 import struct
 import threading
 import time
-
-# TODO: Replace global seed with a random seed that is logged at the beginning of the run.
-random.seed(42)
 
 # Use one universal local hosting address, as we assume that our mini internet
 # is run on one device.
@@ -29,9 +28,9 @@ HEADER_FORMAT = "!BBBHHH"
 HEADER_SIZE = struct.calcsize(HEADER_FORMAT)
 
 # Default inbound queue capacity (datagrams). Overflow drops are logged.
-# 128 absorbs bursts that back up behind the blocking per-packet delay in
-# _send_datagram; at 32 a 20-probe bidirectional exchange overflowed even
-# with zero configured loss (issue #32).
+# Delayed delivery is handled by a nonblocking scheduler (issue #34), so the
+# queue only has to absorb short receive bursts, not packets stuck behind a
+# sleeping forwarder.
 DEFAULT_INBOUND_QUEUE_SIZE = 128
 
 # How long recvfrom / queue.get wait before re-checking the stop flag.
@@ -58,6 +57,8 @@ class Router:
         delays: dict,
         loss,
         inbound_queue_size: int = DEFAULT_INBOUND_QUEUE_SIZE,
+        link_loss: dict | None = None,
+        seed: int | None = None,
     ):
         """
         :param IP_ADDRESS: Real IP address the router's socket binds to.
@@ -68,8 +69,14 @@ class Router:
         :param neighbors: Virtual addresses of directly connected devices.
         :param forwarding_table: Maps destination address -> next-hop neighbor.
         :param delays: Maps neighbor address -> added delay, in seconds.
-        :param loss: Probability (0-1) that a sent packet is dropped.
+        :param loss: Default probability (0-1) that a sent packet is dropped.
         :param inbound_queue_size: Max datagrams waiting for the forwarder.
+        :param link_loss: Optional map of neighbor address -> loss probability
+            for that directed link, overriding ``loss`` on that link only.
+        :param seed: Optional seed for this router's random loss decisions.
+            When omitted, a seed is generated and recorded so the run can be
+            reproduced; the seed in use is always logged and kept on
+            ``self.seed``.
         """
 
         # Meta configuration used by the real-world socket infrastructure.
@@ -81,6 +88,19 @@ class Router:
         self.buffer_size = int(buffer_size)  # In bytes.
         self.virtual_address = int(virtual_address)
         self.loss_chance = float(loss)
+
+        # Per-link (directed, by next-hop neighbor) loss overrides.
+        self.link_loss = {
+            int(neighbor): float(chance)
+            for neighbor, chance in (link_loss or {}).items()
+        }
+
+        # Reproducible randomness: every loss decision draws from this
+        # router-local generator, and the seed is recorded and logged.
+        if seed is None:
+            seed = random.SystemRandom().getrandbits(32)
+        self.seed = int(seed)
+        self._rng = random.Random(self.seed)
 
         # Virtual addresses of neighboring devices.
         self.neighboring_sockets = neighbors.copy()
@@ -110,16 +130,30 @@ class Router:
             for neighbor in self.neighboring_sockets
         }
 
-        # Concurrency: one receiver, one forwarder, bounded inbound queue.
+        # Concurrency: one receiver, one forwarder, one delayed-delivery
+        # scheduler, bounded inbound queue.
         self._stop_event = threading.Event()
         self._inbound = queue.Queue(maxsize=inbound_queue_size)
         self._print_lock = threading.Lock()
         self._send_lock = threading.Lock()
         self._receiver_thread: threading.Thread | None = None
         self._forwarder_thread: threading.Thread | None = None
+        self._delivery_thread: threading.Thread | None = None
+
+        # Delayed-delivery schedule: (due_monotonic, seq, datagram, dest).
+        # The seq tie-breaker keeps heap ordering FIFO for equal due times.
+        self._delay_heap: list = []
+        self._delay_cond = threading.Condition()
+        self._delay_seq = itertools.count()
+
         self.overflow_drops = 0
         self.malformed_drops = 0
         self.no_route_drops = 0
+        # Injected random-loss drops, kept separate from the drop counters
+        # above so experiments can tell configured loss from other causes.
+        self.loss_drops = 0
+        # Packets that were scheduled with a positive link delay.
+        self.delayed_sends = 0
 
         print(
             "Router initialized.\n"
@@ -131,6 +165,9 @@ class Router:
             f"     bandwidth={self.bandwidth}\n"
             f"     buffer_size={self.buffer_size}\n"
             f"     inbound_queue_size={inbound_queue_size}\n"
+            f"     loss_chance={self.loss_chance}\n"
+            f"     link_loss={self.link_loss}\n"
+            f"     seed={self.seed}\n"
         )
 
     def _log(self, message: str) -> None:
@@ -222,7 +259,54 @@ class Router:
     # ------------------------------------------------------------------
     # Sending and keeping datagrams
     # ------------------------------------------------------------------
+    def _link_loss_chance(self, forward) -> float:
+        """Return the loss probability for the directed link to ``forward``."""
+        return self.link_loss.get(forward, self.loss_chance)
+
+    def _schedule_send(self, datagram, end_destination) -> None:
+        """Schedule ``datagram`` for delivery after the next hop's link delay.
+
+        Runs on the forwarder thread and never sleeps: the datagram is
+        placed on the delayed-delivery heap and the scheduler thread
+        transmits it when its due time arrives, so a delayed packet cannot
+        block unrelated packets from being processed.
+        """
+        forward = self.forwarding_table.get(end_destination)
+        if forward is None:
+            self.no_route_drops += 1
+            self._log(
+                f"Router {self.virtual_address} dropped a packet: "
+                f"no route to destination {end_destination} "
+                f"(no_route_drops={self.no_route_drops}).\n"
+            )
+            return
+
+        delay = max(0.0, float(self.delays.get(forward, 0.0)))
+        due = time.monotonic() + delay
+        if delay > 0:
+            self.delayed_sends += 1
+            self._log(
+                f"Router {self.virtual_address} delayed a packet "
+                f"(nonblocking).\n"
+                f"     dest={end_destination}\n"
+                f"     forward={forward}\n"
+                f"     delay={delay}\n"
+                f"     delayed_sends={self.delayed_sends}\n"
+            )
+
+        with self._delay_cond:
+            heapq.heappush(
+                self._delay_heap,
+                (due, next(self._delay_seq), datagram, end_destination),
+            )
+            self._delay_cond.notify()
+
     def _send_datagram(self, datagram, end_destination):
+        """Apply the loss decision and transmit ``datagram`` to its next hop.
+
+        Runs on the delayed-delivery scheduler thread once the link delay
+        has elapsed. Contains no sleeps.
+        """
         forward = self.forwarding_table.get(end_destination)
         if forward is None:
             self.no_route_drops += 1
@@ -244,29 +328,27 @@ class Router:
             )
             return
 
+        # Simulated random loss, drawn from this router's seeded generator.
+        # A 0.0 chance can never drop because random() < 0.0 is never true.
+        loss_chance = self._link_loss_chance(forward)
+        if self._rng.random() < loss_chance:
+            self.loss_drops += 1
+            self._log(
+                f"Router {self.virtual_address} dropped a packet: "
+                f"injected random loss.\n"
+                f"     dest={end_destination}\n"
+                f"     forward={forward}\n"
+                f"     loss_chance={loss_chance}\n"
+                f"     loss_drops={self.loss_drops}\n"
+            )
+            return
+
         self._log(
             f"Router {self.virtual_address} is sending a packet.\n"
             f"     dest={end_destination}\n"
             f"     forward={forward}\n"
             f"     forward_real={dest}\n"
         )
-
-        # Simulated transmission delay (runs on the forwarder thread only).
-        # TODO: sleep() must be replaced with a non-blocking delay.
-        delay = self.delays[forward]
-        time.sleep(delay)
-
-        # Simulated random loss.
-        # TODO: Replace global loss with per-link loss. Low priority.
-        if random.random() < self.loss_chance:
-            self._log(
-                f"Router {self.virtual_address} lost a packet in transit.\n"
-                f"     dest={end_destination}\n"
-                f"     forward={forward}\n"
-                f"     forward_real={dest}\n"
-                f"     loss_chance={self.loss_chance}\n"
-            )
-            return
 
         with self._send_lock:
             self.socket.sendto(datagram, dest)
@@ -332,11 +414,39 @@ class Router:
             payload,
         )
 
-        self._send_datagram(datagram, head["destination"])
+        self._schedule_send(datagram, head["destination"])
 
     # ------------------------------------------------------------------
     # Concurrent workers
     # ------------------------------------------------------------------
+    def delivery_loop(self) -> None:
+        """Transmit scheduled datagrams once their link delay has elapsed."""
+        while True:
+            with self._delay_cond:
+                while not self._delay_heap and not self._stop_event.is_set():
+                    self._delay_cond.wait(timeout=_QUEUE_GET_TIMEOUT_S)
+                if self._stop_event.is_set():
+                    return
+
+                now = time.monotonic()
+                due = self._delay_heap[0][0]
+                if due > now:
+                    # Sleep inside the condition so a nearer deadline or
+                    # shutdown can interrupt the wait.
+                    self._delay_cond.wait(timeout=due - now)
+                    continue
+                _, _, datagram, end_destination = heapq.heappop(
+                    self._delay_heap
+                )
+
+            try:
+                self._send_datagram(datagram, end_destination)
+            except Exception as exc:  # Keep the scheduler alive on bad sends.
+                self._log(
+                    f"Router {self.virtual_address} failed to deliver "
+                    f"a delayed packet: {exc!r}"
+                )
+
     def listening_loop(self) -> None:
         """Receive, validate, and enqueue UDP datagrams for the forwarder."""
         while not self._stop_event.is_set():
@@ -419,19 +529,33 @@ class Router:
             name=f"router-{self.virtual_address}-forwarder",
             daemon=True,
         )
+        self._delivery_thread = threading.Thread(
+            target=self.delivery_loop,
+            name=f"router-{self.virtual_address}-delivery",
+            daemon=True,
+        )
         self._receiver_thread.start()
         self._forwarder_thread.start()
+        self._delivery_thread.start()
         self._log(f"Router {self.virtual_address} workers started.\n")
 
     def shutdown(self, join_timeout: float = 2.0) -> None:
         """Stop workers and close the socket so the bind port is released."""
         self._stop_event.set()
+        # Wake the delivery scheduler so it notices the stop flag.
+        with self._delay_cond:
+            self._delay_cond.notify_all()
         try:
             self.socket.close()
         except OSError:
             pass
 
-        for worker in (self._receiver_thread, self._forwarder_thread):
+        workers = (
+            self._receiver_thread,
+            self._forwarder_thread,
+            self._delivery_thread,
+        )
+        for worker in workers:
             if worker is not None and worker.is_alive():
                 worker.join(timeout=join_timeout)
 

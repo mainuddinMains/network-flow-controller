@@ -1,6 +1,12 @@
+"""UDP host endpoints with echo probes, RTT measurement, and timeouts."""
+
+from __future__ import annotations
+
 import socket
 import struct
 import threading
+import time
+from dataclasses import dataclass
 
 # Universal header format
 HEADER_FORMAT = "!BBBHHH"
@@ -13,22 +19,79 @@ LOCAL_HOST = "127.0.0.1"
 UDP_MAX_SIZE = 65535
 DEFAULT_TTL = 64
 
+# Default finite probe response timeout (seconds).
+DEFAULT_PROBE_TIMEOUT_S = 1.0
+
+# Upper bound on socket wait when no nearer probe deadline exists.
+_DEFAULT_SOCKET_TIMEOUT_S = 1.0
+_MIN_SOCKET_TIMEOUT_S = 0.001
+
+# Local datagram that unblocks recvfrom so deadlines can be recomputed.
+_WAKEUP_DATAGRAM = b"\xff\xffPROBE_WAKE"
+
+
+@dataclass
+class OutstandingProbe:
+    """One echo request waiting for a matching reply or timeout."""
+
+    identifier: int
+    destination: int
+    sent_at: float
+    deadline: float
+
+
+@dataclass(frozen=True)
+class ProbeResult:
+    """Immutable record of a completed probe (success or timeout)."""
+
+    identifier: int
+    destination: int
+    status: str
+    rtt: float | None
+    completed_at: float
+
 
 class Host:
+    """Mini-internet host that sends and answers echo probes over UDP."""
+
     flags = {
         "echo": 0b0000_0001,
-        "reply": 0b0000_0010
+        "reply": 0b0000_0010,
     }
 
-    def __init__(self, IP_ADDRESS, PORT, virtual_address, entry_router_address):
+    def __init__(
+        self,
+        IP_ADDRESS,
+        PORT,
+        virtual_address,
+        entry_router_address,
+        probe_timeout: float = DEFAULT_PROBE_TIMEOUT_S,
+    ):
+        """
+        :param IP_ADDRESS: Real IP address the host socket binds to.
+        :param PORT: Real UDP port the host socket binds to.
+        :param virtual_address: This host's address in the mini internet.
+        :param entry_router_address: Virtual address of the first-hop router.
+        :param probe_timeout: Seconds to wait for an echo reply before timeout.
+        """
+        if not isinstance(probe_timeout, (int, float)) or isinstance(
+            probe_timeout, bool
+        ):
+            raise ValueError("probe_timeout must be a positive number")
+        if not (probe_timeout > 0) or probe_timeout != probe_timeout:  # NaN check
+            raise ValueError("probe_timeout must be finite and positive")
+        if probe_timeout == float("inf"):
+            raise ValueError("probe_timeout must be finite and positive")
+
         self.meta_ip = IP_ADDRESS
         self.meta_port = PORT
         self.virtual_address = virtual_address
+        self.probe_timeout = float(probe_timeout)
 
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.socket.bind((self.meta_ip, self.meta_port))
-        # Lets the listening thread wake up periodically to check for shutdown.
-        self.socket.settimeout(1.0)
+        # Initial timeout; listening_loop adjusts it from probe deadlines.
+        self.socket.settimeout(_DEFAULT_SOCKET_TIMEOUT_S)
 
         self.entry_router_address = entry_router_address
         self.entry_router_meta = (LOCAL_HOST, 60000 + entry_router_address)
@@ -39,7 +102,11 @@ class Host:
         self._stop_event = threading.Event()
         self._storage_lock = threading.Lock()
         self._print_lock = threading.Lock()
+        self._probe_lock = threading.Lock()
         self._next_identifier = 0
+        self._outstanding: dict[int, OutstandingProbe] = {}
+        self._probe_results: list[ProbeResult] = []
+        self._listener_thread: threading.Thread | None = None
 
     # ------------------------------------------------------------------
     # Helpers
@@ -49,10 +116,89 @@ class Host:
         with self._print_lock:
             print(message)
 
+    def _allocate_identifier(self) -> int:
+        """Return a free 16-bit id not currently used by an outstanding probe."""
+        with self._probe_lock:
+            for _ in range(0x10000):
+                candidate = self._next_identifier
+                self._next_identifier = (self._next_identifier + 1) & 0xFFFF
+                if candidate not in self._outstanding:
+                    return candidate
+        raise RuntimeError(
+            "no free probe identifiers; all 65536 ids have outstanding probes"
+        )
+
     def _new_identifier(self):
-        identifier = self._next_identifier
-        self._next_identifier = (self._next_identifier + 1) & 0xFFFF
-        return identifier
+        """Allocate the next packet identifier, skipping outstanding probe ids."""
+        return self._allocate_identifier()
+
+    def _socket_wait_timeout(self) -> float:
+        """Seconds until the next probe deadline, capped for shutdown wakeups."""
+        with self._probe_lock:
+            if not self._outstanding:
+                return _DEFAULT_SOCKET_TIMEOUT_S
+            now = time.monotonic()
+            earliest = min(probe.deadline for probe in self._outstanding.values())
+        remaining = earliest - now
+        if remaining <= 0:
+            return _MIN_SOCKET_TIMEOUT_S
+        return min(_DEFAULT_SOCKET_TIMEOUT_S, max(_MIN_SOCKET_TIMEOUT_S, remaining))
+
+    def _wake_listener(self) -> None:
+        """Unblock recvfrom so the listener can adopt a nearer probe deadline."""
+        try:
+            self.socket.sendto(_WAKEUP_DATAGRAM, (self.meta_ip, self.meta_port))
+        except OSError:
+            pass
+
+    def _expire_probes(self, now: float | None = None) -> list[ProbeResult]:
+        """Mark unanswered probes past their deadline as timed out."""
+        if now is None:
+            now = time.monotonic()
+        expired: list[ProbeResult] = []
+        with self._probe_lock:
+            due = [
+                identifier
+                for identifier, probe in self._outstanding.items()
+                if now >= probe.deadline
+            ]
+            for identifier in due:
+                probe = self._outstanding.pop(identifier)
+                result = ProbeResult(
+                    identifier=identifier,
+                    destination=probe.destination,
+                    status="timeout",
+                    rtt=None,
+                    completed_at=now,
+                )
+                self._probe_results.append(result)
+                expired.append(result)
+        for result in expired:
+            self._log(
+                f"Host {self.virtual_address} probe timed out.\n"
+                f"     id={result.identifier}\n"
+                f"     dest={result.destination}\n"
+            )
+        return expired
+
+    def outstanding_probe_ids(self) -> set[int]:
+        """Return a snapshot of identifiers still waiting for a reply."""
+        with self._probe_lock:
+            return set(self._outstanding)
+
+    def probe_results(self) -> tuple[ProbeResult, ...]:
+        """Return completed probe results in completion order."""
+        with self._probe_lock:
+            return tuple(self._probe_results)
+
+    def rtt_samples(self) -> tuple[float, ...]:
+        """Return successful probe RTT values in completion order."""
+        with self._probe_lock:
+            return tuple(
+                result.rtt
+                for result in self._probe_results
+                if result.status == "success" and result.rtt is not None
+            )
 
     # ------------------------------------------------------------------
     # Datagram handling
@@ -147,8 +293,73 @@ class Host:
             f"     payload={truncated}\n"
         )
 
+    def _match_probe_reply(self, header) -> ProbeResult | None:
+        """Match a reply to an outstanding probe; ignore invalid replies."""
+        if not (header["type_flags"] & self.flags["reply"]):
+            return None
+
+        identifier = header["identifier"]
+        source = header["source"]
+        now = time.monotonic()
+
+        with self._probe_lock:
+            probe = self._outstanding.get(identifier)
+            if probe is None:
+                self._log(
+                    f"Host {self.virtual_address} ignored unmatched reply.\n"
+                    f"     id={identifier}\n"
+                    f"     src={source}\n"
+                )
+                return None
+            if source != probe.destination:
+                self._log(
+                    f"Host {self.virtual_address} ignored reply from "
+                    f"unexpected source.\n"
+                    f"     id={identifier}\n"
+                    f"     src={source}\n"
+                    f"     expected={probe.destination}\n"
+                )
+                return None
+            if now > probe.deadline:
+                # Late reply: do not record RTT; leave expiry to _expire_probes
+                # or finalize timeout here so the id is freed promptly.
+                self._outstanding.pop(identifier, None)
+                result = ProbeResult(
+                    identifier=identifier,
+                    destination=probe.destination,
+                    status="timeout",
+                    rtt=None,
+                    completed_at=now,
+                )
+                self._probe_results.append(result)
+                self._log(
+                    f"Host {self.virtual_address} ignored late reply.\n"
+                    f"     id={identifier}\n"
+                    f"     dest={probe.destination}\n"
+                )
+                return result
+
+            self._outstanding.pop(identifier)
+            rtt = now - probe.sent_at
+            result = ProbeResult(
+                identifier=identifier,
+                destination=probe.destination,
+                status="success",
+                rtt=rtt,
+                completed_at=now,
+            )
+            self._probe_results.append(result)
+
+        self._log(
+            f"Host {self.virtual_address} probe succeeded.\n"
+            f"     id={result.identifier}\n"
+            f"     dest={result.destination}\n"
+            f"     rtt={result.rtt:.6f}s\n"
+        )
+        return result
+
     def _handle_datagram(self, data):
-        """Process one received datagram (keep it, respond to flags)."""
+        """Process one received datagram (keep it, match probes, respond)."""
         head, payload = self._interpret_datagram(data)
 
         self._log(f"Host {self.virtual_address} received packet.\n"
@@ -166,7 +377,10 @@ class Host:
 
         self._keep_datagram(payload, head)
 
-        # Insert any other needed logic here. I.e., responding to certain flags.
+        # Measurement matching runs before echo responses.
+        if head["type_flags"] & self.flags["reply"]:
+            self._match_probe_reply(head)
+
         if head["type_flags"] & self.flags["echo"]:
             # Clear the echo flag on the reply, otherwise two hosts would
             # echo each other forever.
@@ -181,6 +395,78 @@ class Host:
 
             self._send_datagram(echo_datagram, head["source"])
 
+    def send_probe(
+        self,
+        destination: int,
+        payload: str | bytes = "",
+        timeout: float | None = None,
+    ) -> int:
+        """Send an echo probe and track it until reply or timeout.
+
+        :param destination: Virtual destination address.
+        :param payload: Probe payload as text or bytes.
+        :param timeout: Optional per-probe timeout in seconds; defaults to
+            ``self.probe_timeout``.
+        :return: The 16-bit message identifier used for the probe.
+        :raises ValueError: if destination or timeout is invalid.
+        :raises OSError: if the UDP send fails (no outstanding entry left).
+        :raises RuntimeError: if no free identifiers remain.
+        """
+        if not isinstance(destination, int) or isinstance(destination, bool):
+            raise ValueError("destination must be an integer")
+        if not 0 <= destination <= 0xFFFF:
+            raise ValueError("destination must be between 0 and 65535")
+
+        if timeout is None:
+            timeout_s = self.probe_timeout
+        else:
+            if not isinstance(timeout, (int, float)) or isinstance(timeout, bool):
+                raise ValueError("timeout must be a positive number")
+            if not (timeout > 0) or timeout != timeout or timeout == float("inf"):
+                raise ValueError("timeout must be finite and positive")
+            timeout_s = float(timeout)
+
+        identifier = self._allocate_identifier()
+        sent_at = time.monotonic()
+        deadline = sent_at + timeout_s
+        probe = OutstandingProbe(
+            identifier=identifier,
+            destination=destination,
+            sent_at=sent_at,
+            deadline=deadline,
+        )
+
+        with self._probe_lock:
+            self._outstanding[identifier] = probe
+
+        datagram = self._create_datagram(
+            DEFAULT_TTL,
+            self.flags["echo"],
+            0,
+            identifier,
+            self.virtual_address,
+            destination,
+            payload,
+        )
+
+        try:
+            self._send_datagram(datagram, destination)
+        except OSError:
+            with self._probe_lock:
+                self._outstanding.pop(identifier, None)
+            raise
+
+        # Recalculate recv timeout against this probe's deadline.
+        self._wake_listener()
+
+        self._log(
+            f"Host {self.virtual_address} started probe.\n"
+            f"     id={identifier}\n"
+            f"     dest={destination}\n"
+            f"     timeout={timeout_s}s\n"
+        )
+        return identifier
+
     # ------------------------------------------------------------------
     # Loops
     # ------------------------------------------------------------------
@@ -188,19 +474,32 @@ class Host:
         """Runs in a background thread; receives and handles datagrams."""
         while not self._stop_event.is_set():
             try:
+                self.socket.settimeout(self._socket_wait_timeout())
+            except OSError:
+                break
+
+            try:
                 data, _ = self.socket.recvfrom(UDP_MAX_SIZE)
             except socket.timeout:
+                self._expire_probes()
                 continue  # Nothing arrived; re-check the stop flag.
             except ConnectionResetError:
+                self._expire_probes()
                 continue  # Windows reports ICMP "port unreachable" this way.
             except OSError:
                 break  # Socket was closed during shutdown.
+
+            if data == _WAKEUP_DATAGRAM or len(data) < HEADER_SIZE:
+                self._expire_probes()
+                continue
 
             try:
                 self._handle_datagram(data)
             except Exception as exc:  # Keep the listener alive on bad packets.
                 self._log(f"Host {self.virtual_address} failed to handle "
                           f"a packet: {exc!r}")
+            finally:
+                self._expire_probes()
 
     def operation_loop(self):
 
@@ -219,10 +518,10 @@ class Host:
             if line.lower() in ("quit", "exit"):
                 break
 
-            type_flags = 0
+            use_probe = False
             tokens = line.split(maxsplit=1)
             if tokens[0].lower() == "echo" and len(tokens) > 1:
-                type_flags |= self.flags["echo"]
+                use_probe = True
                 line = tokens[1]
 
             try:
@@ -234,26 +533,52 @@ class Host:
                 self._log("Usage: [echo] <dest 0-65535> <message>")
                 continue
 
+            if use_probe:
+                try:
+                    self.send_probe(destination, message)
+                except (OSError, RuntimeError, ValueError) as error:
+                    self._log(f"Probe send failed: {error}")
+                continue
+
             datagram = self._create_datagram(DEFAULT_TTL,
-                                             type_flags,
+                                             0,
                                              0,
                                              self._new_identifier(),
                                              self.virtual_address,
                                              destination,
                                              message)
-            self._send_datagram(datagram, destination)
+            try:
+                self._send_datagram(datagram, destination)
+            except OSError as error:
+                self._log(f"Send failed: {error}")
+
+    def start(self) -> None:
+        """Start the background listening thread if it is not already running."""
+        if self._listener_thread is not None and self._listener_thread.is_alive():
+            return
+        self._stop_event.clear()
+        self._listener_thread = threading.Thread(
+            target=self.listening_loop,
+            name=f"host-{self.virtual_address}-listener",
+            daemon=True,
+        )
+        self._listener_thread.start()
+
+    def shutdown(self, join_timeout: float = 2.0) -> None:
+        """Stop the listener and close the socket."""
+        self._stop_event.set()
+        try:
+            self.socket.close()
+        except OSError:
+            pass
+        if self._listener_thread is not None:
+            self._listener_thread.join(timeout=join_timeout)
+        self._log(f"Host {self.virtual_address} shut down.")
 
     def run(self):
         """Start the listener thread, then run the user-input loop."""
-        listener = threading.Thread(target=self.listening_loop,
-                                    name=f"host-{self.virtual_address}-listener",
-                                    daemon=True)
-        listener.start()
-
+        self.start()
         try:
             self.operation_loop()
         finally:
-            self._stop_event.set()
-            listener.join(timeout=2)
-            self.socket.close()
-            self._log(f"Host {self.virtual_address} shut down.")
+            self.shutdown()

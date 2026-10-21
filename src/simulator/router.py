@@ -1,11 +1,14 @@
 """UDP router with concurrent receive and forward workers."""
 
+import logging
 import queue
 import random
 import socket
 import struct
 import threading
 import time
+
+from src.telemetry.netlog import format_event, get_device_logger
 
 # TODO: Replace global seed with a random seed that is logged at the beginning of the run.
 random.seed(42)
@@ -37,6 +40,20 @@ DEFAULT_INBOUND_QUEUE_SIZE = 128
 # How long recvfrom / queue.get wait before re-checking the stop flag.
 _SOCKET_TIMEOUT_S = 1.0
 _QUEUE_GET_TIMEOUT_S = 1.0
+
+# Type-flag bits of the universal header (mirrors Host.flags, like
+# HEADER_FORMAT and the other protocol constants duplicated above).
+_FLAG_ECHO = 0b0000_0001
+_FLAG_REPLY = 0b0000_0010
+
+
+def _packet_type(type_flags: int) -> str:
+    """Name the packet type encoded in the header's type flags."""
+    if type_flags & _FLAG_ECHO:
+        return "echo"
+    if type_flags & _FLAG_REPLY:
+        return "reply"
+    return "data"
 
 
 class Router:
@@ -113,7 +130,6 @@ class Router:
         # Concurrency: one receiver, one forwarder, bounded inbound queue.
         self._stop_event = threading.Event()
         self._inbound = queue.Queue(maxsize=inbound_queue_size)
-        self._print_lock = threading.Lock()
         self._send_lock = threading.Lock()
         self._receiver_thread: threading.Thread | None = None
         self._forwarder_thread: threading.Thread | None = None
@@ -122,22 +138,27 @@ class Router:
         self.no_route_drops = 0
         self.ttl_expired_drops = 0
 
-        print(
-            "Router initialized.\n"
-            f"     meta_ip={self.meta_ip}\n"
-            f"     meta_port={self.meta_port}\n"
-            f"     address={self.virtual_address}\n"
-            f"     neighbors={self.neighboring_sockets}\n"
-            f"     forwarding_table={self.forwarding_table}\n"
-            f"     bandwidth={self.bandwidth}\n"
-            f"     buffer_size={self.buffer_size}\n"
-            f"     inbound_queue_size={inbound_queue_size}\n"
+        self._logger = get_device_logger(f"router-{self.virtual_address}")
+        self._log_event(
+            "init",
+            meta_ip=self.meta_ip,
+            meta_port=self.meta_port,
+            address=self.virtual_address,
+            neighbors=self.neighboring_sockets,
+            forwarding_table=self.forwarding_table,
+            bandwidth=self.bandwidth,
+            buffer_size=self.buffer_size,
+            inbound_queue_size=inbound_queue_size,
+            loss_chance=self.loss_chance,
         )
 
-    def _log(self, message: str) -> None:
-        """Print without interleaving output from worker threads."""
-        with self._print_lock:
-            print(message)
+    def _log_event(self, event: str, _level: int = logging.INFO, **fields) -> None:
+        """Log one structured network event for this router.
+
+        Single-line records keep concurrent worker output readable; the
+        shared formatter adds the timestamp, run id, and device name.
+        """
+        self._logger.log(_level, format_event(event, **fields))
 
     # ------------------------------------------------------------------
     # Datagram encoding and decoding
@@ -202,63 +223,67 @@ class Router:
         datagram = header_bytes + payload_bytes
 
         if len(datagram) > MAX_PACKET_SIZE_B:
-            self._log(
-                f"Router {self.virtual_address} refused to build an "
-                f"oversized packet.\n"
-                f"     bytes={len(datagram)}\n"
-                f"     max={MAX_PACKET_SIZE_B}\n"
+            self._log_event(
+                "drop",
+                _level=logging.WARNING,
+                reason="oversized_build",
+                id=identifier,
+                type=_packet_type(type_flags),
+                src=source,
+                dest=destination,
+                ttl=TTL,
+                bytes=len(datagram),
+                max=MAX_PACKET_SIZE_B,
             )
             raise ValueError(
                 f"packet of {len(datagram)} bytes exceeds the "
                 f"{MAX_PACKET_SIZE_B}-byte protocol maximum"
             )
 
-        self._log(
-            f"Router {self.virtual_address} created a packet.\n"
-            f"     bytes={len(datagram)}"
-        )
-
         return datagram
 
     # ------------------------------------------------------------------
     # Sending and keeping datagrams
     # ------------------------------------------------------------------
-    def _send_datagram(self, datagram, end_destination):
+    def _send_datagram(self, datagram, header):
+        """Forward one datagram described by ``header`` toward its next hop.
+
+        ``header`` carries the already-decremented TTL so the logged value
+        matches the datagram on the wire.
+        """
+        end_destination = header["destination"]
+        packet = {
+            "id": header["identifier"],
+            "type": _packet_type(header["type_flags"]),
+            "src": header["source"],
+            "dest": end_destination,
+            "ttl": header["TTL"],
+        }
+
         forward = self.forwarding_table.get(end_destination)
         if forward is None:
             self.no_route_drops += 1
-            head, _ = self._interpret_datagram(datagram)
-            self._log(
-                f"Router {self.virtual_address} dropped a packet: "
-                f"no route to destination {end_destination} "
-                f"(no_route_drops={self.no_route_drops}).\n"
-                f"     id={head['identifier']}\n"
-                f"     src={head['source']}\n"
-                f"     ttl={head['TTL']}\n"
+            self._log_event(
+                "drop",
+                _level=logging.WARNING,
+                reason="no_route",
+                **packet,
+                no_route_drops=self.no_route_drops,
             )
             return
 
         dest = self.address_to_real_dest_map.get(forward)
         if dest is None:
             self.no_route_drops += 1
-            head, _ = self._interpret_datagram(datagram)
-            self._log(
-                f"Router {self.virtual_address} dropped a packet: "
-                f"next hop {forward} for destination {end_destination} "
-                f"is not a configured neighbor "
-                f"(no_route_drops={self.no_route_drops}).\n"
-                f"     id={head['identifier']}\n"
-                f"     src={head['source']}\n"
-                f"     ttl={head['TTL']}\n"
+            self._log_event(
+                "drop",
+                _level=logging.WARNING,
+                reason="next_hop_not_neighbor",
+                next_hop=forward,
+                **packet,
+                no_route_drops=self.no_route_drops,
             )
             return
-
-        self._log(
-            f"Router {self.virtual_address} is sending a packet.\n"
-            f"     dest={end_destination}\n"
-            f"     forward={forward}\n"
-            f"     forward_real={dest}\n"
-        )
 
         # Simulated transmission delay (runs on the forwarder thread only).
         # TODO: sleep() must be replaced with a non-blocking delay.
@@ -268,15 +293,24 @@ class Router:
         # Simulated random loss.
         # TODO: Replace global loss with per-link loss. Low priority.
         if random.random() < self.loss_chance:
-            self._log(
-                f"Router {self.virtual_address} lost a packet in transit.\n"
-                f"     dest={end_destination}\n"
-                f"     forward={forward}\n"
-                f"     forward_real={dest}\n"
-                f"     loss_chance={self.loss_chance}\n"
+            self._log_event(
+                "drop",
+                _level=logging.WARNING,
+                reason="injected_loss",
+                next_hop=forward,
+                delay_s=delay,
+                loss_chance=self.loss_chance,
+                **packet,
             )
             return
 
+        self._log_event(
+            "forward",
+            next_hop=forward,
+            next_hop_real=f"{dest[0]}:{dest[1]}",
+            delay_s=delay,
+            **packet,
+        )
         with self._send_lock:
             self.socket.sendto(datagram, dest)
 
@@ -295,26 +329,30 @@ class Router:
         truncated = payload_results[:30] + (
             "..." if len(payload_results) > 30 else ""
         )
-        self._log(
-            f"Router {self.virtual_address} has been given a packet to keep.\n"
-            f"     len_payload={len(payload)}\n"
-            f"     payload={truncated}\n"
+        truncated = truncated.replace("\r", " ").replace("\n", " ")
+        self._log_event(
+            "receive",
+            id=header["identifier"],
+            type=_packet_type(header["type_flags"]),
+            src=header["source"],
+            dest=self.virtual_address,
+            ttl=header["TTL"],
+            bytes=len(payload),
+            payload=truncated,
         )
 
     def _process_datagram(self, data: bytes) -> None:
         """Apply local-delivery, TTL, and forwarding rules to one datagram."""
         head, payload = self._interpret_datagram(data)
 
-        # TODO(functionality): size_head below reports len(head), which is
-        # the number of dictionary keys, not the header size in bytes.
-        self._log(
-            f"Router {self.virtual_address} received packet.\n"
-            f"     src={head['source']}\n"
-            f"     identifier={head['identifier']}\n"
-            f"     dest={head['destination']}\n"
-            f"     size_head={len(head)}\n"
-            f"     size_payload={len(payload)}\n"
-            f"     ttl={head['TTL']}\n"
+        self._log_event(
+            "receive",
+            id=head["identifier"],
+            type=_packet_type(head["type_flags"]),
+            src=head["source"],
+            dest=head["destination"],
+            ttl=head["TTL"],
+            bytes=len(payload),
         )
 
         if head["destination"] == self.virtual_address:
@@ -325,13 +363,16 @@ class Router:
         # If the TTL of a received packet is 0 or less, drop it.
         if head["TTL"] <= 0:
             self.ttl_expired_drops += 1
-            self._log(
-                f"Router {self.virtual_address} dropped an expired packet "
-                f"(ttl_expired_drops={self.ttl_expired_drops}).\n"
-                f"     id={head['identifier']}\n"
-                f"     src={head['source']}\n"
-                f"     dest={head['destination']}\n"
-                f"     ttl={head['TTL']}\n"
+            self._log_event(
+                "drop",
+                _level=logging.WARNING,
+                reason="ttl_expired",
+                id=head["identifier"],
+                type=_packet_type(head["type_flags"]),
+                src=head["source"],
+                dest=head["destination"],
+                ttl=head["TTL"],
+                ttl_expired_drops=self.ttl_expired_drops,
             )
             return
 
@@ -346,7 +387,7 @@ class Router:
             payload,
         )
 
-        self._send_datagram(datagram, head["destination"])
+        self._send_datagram(datagram, {**head, "TTL": head["TTL"] - 1})
 
     # ------------------------------------------------------------------
     # Concurrent workers
@@ -368,21 +409,25 @@ class Router:
 
             if len(data) < HEADER_SIZE:
                 self.malformed_drops += 1
-                self._log(
-                    f"Router {self.virtual_address} rejected a malformed "
-                    f"packet: {len(data)}-byte datagram is shorter than "
-                    f"the {HEADER_SIZE}-byte header "
-                    f"(malformed_drops={self.malformed_drops}).\n"
+                self._log_event(
+                    "drop",
+                    _level=logging.WARNING,
+                    reason="malformed_too_short",
+                    bytes=len(data),
+                    min=HEADER_SIZE,
+                    malformed_drops=self.malformed_drops,
                 )
                 continue
 
             if len(data) > MAX_PACKET_SIZE_B:
                 self.malformed_drops += 1
-                self._log(
-                    f"Router {self.virtual_address} rejected a malformed "
-                    f"packet: {len(data)}-byte datagram exceeds the "
-                    f"{MAX_PACKET_SIZE_B}-byte maximum "
-                    f"(malformed_drops={self.malformed_drops}).\n"
+                self._log_event(
+                    "drop",
+                    _level=logging.WARNING,
+                    reason="malformed_oversized",
+                    bytes=len(data),
+                    max=MAX_PACKET_SIZE_B,
+                    malformed_drops=self.malformed_drops,
                 )
                 continue
 
@@ -390,10 +435,19 @@ class Router:
                 self._inbound.put_nowait(data)
             except queue.Full:
                 self.overflow_drops += 1
-                self._log(
-                    f"Router {self.virtual_address} dropped a packet: "
-                    f"inbound queue full "
-                    f"(overflow_drops={self.overflow_drops}).\n"
+                # The datagram passed both size checks, so its header is
+                # parseable and the dropped packet can be identified.
+                head, _ = self._interpret_datagram(data)
+                self._log_event(
+                    "drop",
+                    _level=logging.WARNING,
+                    reason="queue_overflow",
+                    id=head["identifier"],
+                    type=_packet_type(head["type_flags"]),
+                    src=head["source"],
+                    dest=head["destination"],
+                    ttl=head["TTL"],
+                    overflow_drops=self.overflow_drops,
                 )
 
     def forwarding_loop(self) -> None:
@@ -407,9 +461,11 @@ class Router:
             try:
                 self._process_datagram(data)
             except Exception as exc:  # Keep the forwarder alive on bad packets.
-                self._log(
-                    f"Router {self.virtual_address} failed to process "
-                    f"a packet: {exc!r}"
+                self._log_event(
+                    "error",
+                    _level=logging.ERROR,
+                    reason="process_failed",
+                    error=repr(exc),
                 )
             finally:
                 self._inbound.task_done()
@@ -435,7 +491,7 @@ class Router:
         )
         self._receiver_thread.start()
         self._forwarder_thread.start()
-        self._log(f"Router {self.virtual_address} workers started.\n")
+        self._log_event("start")
 
     def shutdown(self, join_timeout: float = 2.0) -> None:
         """Stop workers and close the socket so the bind port is released."""
@@ -449,7 +505,7 @@ class Router:
             if worker is not None and worker.is_alive():
                 worker.join(timeout=join_timeout)
 
-        self._log(f"Router {self.virtual_address} shut down.\n")
+        self._log_event("shutdown")
 
     def operation_loop(self) -> None:
         """Run concurrent workers until shutdown (process entry point)."""

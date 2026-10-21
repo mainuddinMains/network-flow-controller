@@ -14,11 +14,15 @@ random.seed(42)
 # is run on one device.
 LOCAL_HOST = "127.0.0.1"
 
-# Size limits, in bytes.
-# TODO: The spec requires every packet to be at most 1,200 bytes, and malformed or oversized packets must
-# be rejected without crashing.
+# Size limits, in bytes. Every packet is at most 1,200 bytes; malformed or
+# oversized datagrams are rejected without crashing (Issue #30).
 MAX_PACKET_SIZE_B = 1200
-# MAX_PAYLOAD_SIZE_B = 900
+
+# recvfrom buffer: large enough to receive an oversized datagram intact so it
+# can be measured and rejected, instead of being truncated (Linux) or raising
+# WSAEMSGSIZE and killing the receiver (Windows). This is intentionally
+# independent of the configured socket receive-buffer size (SO_RCVBUF).
+UDP_MAX_SIZE = 65535
 
 # Universal header format: TTL, type_flags, reserve, identifier, source, destination.
 HEADER_FORMAT = "!BBBHHH"
@@ -111,6 +115,8 @@ class Router:
         self._receiver_thread: threading.Thread | None = None
         self._forwarder_thread: threading.Thread | None = None
         self.overflow_drops = 0
+        self.malformed_drops = 0
+        self.no_route_drops = 0
 
         print(
             "Router initialized.\n"
@@ -183,13 +189,25 @@ class Router:
             destination,
         )
 
-        # TODO: I think this line here might wrap payload in quotes that shouldn't be there. Not entirely sure.
-        payload_bytes = str(payload).encode("utf-8")
-
-        # TODO(functionality): Enforce the maximum packet size here or before
-        # sending (see the size constants at the top of the file).
+        # Forwarded payloads stay raw bytes; only non-bytes input is encoded.
+        if isinstance(payload, (bytes, bytearray)):
+            payload_bytes = bytes(payload)
+        else:
+            payload_bytes = str(payload).encode("utf-8")
 
         datagram = header_bytes + payload_bytes
+
+        if len(datagram) > MAX_PACKET_SIZE_B:
+            self._log(
+                f"Router {self.virtual_address} refused to build an "
+                f"oversized packet.\n"
+                f"     bytes={len(datagram)}\n"
+                f"     max={MAX_PACKET_SIZE_B}\n"
+            )
+            raise ValueError(
+                f"packet of {len(datagram)} bytes exceeds the "
+                f"{MAX_PACKET_SIZE_B}-byte protocol maximum"
+            )
 
         self._log(
             f"Router {self.virtual_address} created a packet.\n"
@@ -202,12 +220,26 @@ class Router:
     # Sending and keeping datagrams
     # ------------------------------------------------------------------
     def _send_datagram(self, datagram, end_destination):
-        # TODO(functionality): An unknown destination or a next hop that is not
-        # a configured neighbor currently raises KeyError. The spec requires
-        # logging the reason, dropping the packet, and keeping the process
-        # running.
-        forward = self.forwarding_table[end_destination]
-        dest = self.address_to_real_dest_map[forward]
+        forward = self.forwarding_table.get(end_destination)
+        if forward is None:
+            self.no_route_drops += 1
+            self._log(
+                f"Router {self.virtual_address} dropped a packet: "
+                f"no route to destination {end_destination} "
+                f"(no_route_drops={self.no_route_drops}).\n"
+            )
+            return
+
+        dest = self.address_to_real_dest_map.get(forward)
+        if dest is None:
+            self.no_route_drops += 1
+            self._log(
+                f"Router {self.virtual_address} dropped a packet: "
+                f"next hop {forward} for destination {end_destination} "
+                f"is not a configured neighbor "
+                f"(no_route_drops={self.no_route_drops}).\n"
+            )
+            return
 
         self._log(
             f"Router {self.virtual_address} is sending a packet.\n"
@@ -246,7 +278,7 @@ class Router:
         a datagram.
         """
 
-        payload_results = payload.decode("utf-8")
+        payload_results = payload.decode("utf-8", errors="replace")
 
         truncated = payload_results[:30] + (
             "..." if len(payload_results) > 30 else ""
@@ -286,6 +318,7 @@ class Router:
             )
             return
 
+        # Forward the payload as raw bytes; decoding is only for local use.
         datagram = self._create_datagram(
             head["TTL"] - 1,
             head["type_flags"],
@@ -293,7 +326,7 @@ class Router:
             head["identifier"],
             head["source"],
             head["destination"],
-            payload.decode("utf-8"),
+            payload,
         )
 
         self._send_datagram(datagram, head["destination"])
@@ -302,16 +335,39 @@ class Router:
     # Concurrent workers
     # ------------------------------------------------------------------
     def listening_loop(self) -> None:
-        """Receive UDP datagrams and enqueue them for the forwarder."""
-        recv_size = max(self.buffer_size, MAX_PACKET_SIZE_B)
+        """Receive, validate, and enqueue UDP datagrams for the forwarder."""
         while not self._stop_event.is_set():
             try:
-                data, _ = self.socket.recvfrom(recv_size)
+                data, _ = self.socket.recvfrom(UDP_MAX_SIZE)
             except socket.timeout:
+                continue
+            except ConnectionResetError:
+                # Windows reports ICMP "port unreachable" from a prior send
+                # this way; it must not stop the receiver.
                 continue
             except OSError:
                 # Socket closed during shutdown, or other fatal socket error.
                 break
+
+            if len(data) < HEADER_SIZE:
+                self.malformed_drops += 1
+                self._log(
+                    f"Router {self.virtual_address} rejected a malformed "
+                    f"packet: {len(data)}-byte datagram is shorter than "
+                    f"the {HEADER_SIZE}-byte header "
+                    f"(malformed_drops={self.malformed_drops}).\n"
+                )
+                continue
+
+            if len(data) > MAX_PACKET_SIZE_B:
+                self.malformed_drops += 1
+                self._log(
+                    f"Router {self.virtual_address} rejected a malformed "
+                    f"packet: {len(data)}-byte datagram exceeds the "
+                    f"{MAX_PACKET_SIZE_B}-byte maximum "
+                    f"(malformed_drops={self.malformed_drops}).\n"
+                )
+                continue
 
             try:
                 self._inbound.put_nowait(data)

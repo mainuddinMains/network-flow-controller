@@ -19,6 +19,10 @@ LOCAL_HOST = "127.0.0.1"
 UDP_MAX_SIZE = 65535
 DEFAULT_TTL = 64
 
+# Protocol-wide maximum packet size, in bytes (header plus payload). This is
+# independent of the UDP receive buffer used by recvfrom.
+MAX_PACKET_SIZE_B = 1200
+
 # Default finite probe response timeout (seconds).
 DEFAULT_PROBE_TIMEOUT_S = 1.0
 
@@ -107,6 +111,7 @@ class Host:
         self._outstanding: dict[int, OutstandingProbe] = {}
         self._probe_results: list[ProbeResult] = []
         self._listener_thread: threading.Thread | None = None
+        self.malformed_drops = 0
 
     # ------------------------------------------------------------------
     # Helpers
@@ -257,6 +262,18 @@ class Host:
             payload_bytes = str(payload).encode('utf-8')
 
         datagram = header_bytes + payload_bytes
+
+        if len(datagram) > MAX_PACKET_SIZE_B:
+            self._log(
+                f"Host {self.virtual_address} refused to build an "
+                f"oversized packet.\n"
+                f"     bytes={len(datagram)}\n"
+                f"     max={MAX_PACKET_SIZE_B}\n"
+            )
+            raise ValueError(
+                f"packet of {len(datagram)} bytes exceeds the "
+                f"{MAX_PACKET_SIZE_B}-byte protocol maximum"
+            )
 
         self._log(
             f"Host {self.virtual_address} created a packet.\n"
@@ -426,6 +443,18 @@ class Host:
                 raise ValueError("timeout must be finite and positive")
             timeout_s = float(timeout)
 
+        # Validate the payload size before registering any probe state so an
+        # oversized probe cannot leave a pending entry behind.
+        if isinstance(payload, (bytes, bytearray)):
+            payload_size = len(payload)
+        else:
+            payload_size = len(str(payload).encode("utf-8"))
+        if HEADER_SIZE + payload_size > MAX_PACKET_SIZE_B:
+            raise ValueError(
+                f"probe of {HEADER_SIZE + payload_size} bytes exceeds the "
+                f"{MAX_PACKET_SIZE_B}-byte protocol maximum"
+            )
+
         identifier = self._allocate_identifier()
         sent_at = time.monotonic()
         deadline = sent_at + timeout_s
@@ -489,7 +518,29 @@ class Host:
             except OSError:
                 break  # Socket was closed during shutdown.
 
-            if data == _WAKEUP_DATAGRAM or len(data) < HEADER_SIZE:
+            if data == _WAKEUP_DATAGRAM:
+                self._expire_probes()
+                continue
+
+            if len(data) < HEADER_SIZE:
+                self.malformed_drops += 1
+                self._log(
+                    f"Host {self.virtual_address} rejected a malformed "
+                    f"packet: {len(data)}-byte datagram is shorter than "
+                    f"the {HEADER_SIZE}-byte header "
+                    f"(malformed_drops={self.malformed_drops}).\n"
+                )
+                self._expire_probes()
+                continue
+
+            if len(data) > MAX_PACKET_SIZE_B:
+                self.malformed_drops += 1
+                self._log(
+                    f"Host {self.virtual_address} rejected a malformed "
+                    f"packet: {len(data)}-byte datagram exceeds the "
+                    f"{MAX_PACKET_SIZE_B}-byte maximum "
+                    f"(malformed_drops={self.malformed_drops}).\n"
+                )
                 self._expire_probes()
                 continue
 
@@ -540,16 +591,16 @@ class Host:
                     self._log(f"Probe send failed: {error}")
                 continue
 
-            datagram = self._create_datagram(DEFAULT_TTL,
-                                             0,
-                                             0,
-                                             self._new_identifier(),
-                                             self.virtual_address,
-                                             destination,
-                                             message)
             try:
+                datagram = self._create_datagram(DEFAULT_TTL,
+                                                 0,
+                                                 0,
+                                                 self._new_identifier(),
+                                                 self.virtual_address,
+                                                 destination,
+                                                 message)
                 self._send_datagram(datagram, destination)
-            except OSError as error:
+            except (OSError, ValueError) as error:
                 self._log(f"Send failed: {error}")
 
     def start(self) -> None:

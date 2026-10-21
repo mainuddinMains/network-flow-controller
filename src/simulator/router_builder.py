@@ -40,6 +40,7 @@ def build_router_from_ini(file_path: Path) -> Router:
         buffer_size=int(reader['host']['buffer_size']),
         neighbors=neighbor_list,
         forwarding_table=forwarding_table,
+        loss=float(reader['loss']['loss_chance'])
     )
 
     return built_link

@@ -132,8 +132,11 @@ class Router:
         # Socket setup.
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.socket.bind((self.meta_ip, self.meta_port))
+        # SO_RCVBUF must be large enough for the OS to queue full-size datagrams.
+        # buffer_size models the in-memory simulation queue; the socket buffer
+        # must be at least UDP_MAX_SIZE so the OS never silently drops valid packets.
         self.socket.setsockopt(
-            socket.SOL_SOCKET, socket.SO_RCVBUF, self.buffer_size
+            socket.SOL_SOCKET, socket.SO_RCVBUF, max(self.buffer_size, UDP_MAX_SIZE)
         )
         # Timeout lets the receiver notice shutdown without a permanent block.
         self.socket.settimeout(_SOCKET_TIMEOUT_S)

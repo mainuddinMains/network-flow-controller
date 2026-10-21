@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import logging
 import socket
 import struct
 import threading
 import time
 from dataclasses import dataclass
+
+from src.telemetry.netlog import format_event, get_device_logger
 
 # Universal header format
 HEADER_FORMAT = "!BBBHHH"
@@ -105,7 +108,6 @@ class Host:
         # Threading state
         self._stop_event = threading.Event()
         self._storage_lock = threading.Lock()
-        self._print_lock = threading.Lock()
         self._probe_lock = threading.Lock()
         self._next_identifier = 0
         self._outstanding: dict[int, OutstandingProbe] = {}
@@ -113,13 +115,34 @@ class Host:
         self._listener_thread: threading.Thread | None = None
         self.malformed_drops = 0
 
+        self._logger = get_device_logger(f"host-{self.virtual_address}")
+        self._log_event(
+            "init",
+            meta_ip=self.meta_ip,
+            meta_port=self.meta_port,
+            address=self.virtual_address,
+            entry_router=self.entry_router_address,
+            probe_timeout_s=self.probe_timeout,
+        )
+
     # ------------------------------------------------------------------
     # Helpers
     # ------------------------------------------------------------------
-    def _log(self, message):
-        """Thread-safe print so output from both threads doesn't interleave."""
-        with self._print_lock:
-            print(message)
+    def _packet_type(self, type_flags: int) -> str:
+        """Name the packet type encoded in the header's type flags."""
+        if type_flags & self.flags["echo"]:
+            return "echo"
+        if type_flags & self.flags["reply"]:
+            return "reply"
+        return "data"
+
+    def _log_event(self, event: str, _level: int = logging.INFO, **fields) -> None:
+        """Log one structured network event for this host.
+
+        Single-line records keep concurrent output readable; the shared
+        formatter adds the timestamp, run id, and device name.
+        """
+        self._logger.log(_level, format_event(event, **fields))
 
     def _allocate_identifier(self) -> int:
         """Return a free 16-bit id not currently used by an outstanding probe."""
@@ -179,10 +202,12 @@ class Host:
                 self._probe_results.append(result)
                 expired.append(result)
         for result in expired:
-            self._log(
-                f"Host {self.virtual_address} probe timed out.\n"
-                f"     id={result.identifier}\n"
-                f"     dest={result.destination}\n"
+            self._log_event(
+                "timeout",
+                _level=logging.WARNING,
+                reason="probe_timeout",
+                id=result.identifier,
+                dest=result.destination,
             )
         return expired
 
@@ -264,29 +289,36 @@ class Host:
         datagram = header_bytes + payload_bytes
 
         if len(datagram) > MAX_PACKET_SIZE_B:
-            self._log(
-                f"Host {self.virtual_address} refused to build an "
-                f"oversized packet.\n"
-                f"     bytes={len(datagram)}\n"
-                f"     max={MAX_PACKET_SIZE_B}\n"
+            self._log_event(
+                "drop",
+                _level=logging.WARNING,
+                reason="oversized_build",
+                id=identifier,
+                type=self._packet_type(type_flags),
+                src=source,
+                dest=destination,
+                ttl=TTL,
+                bytes=len(datagram),
+                max=MAX_PACKET_SIZE_B,
             )
             raise ValueError(
                 f"packet of {len(datagram)} bytes exceeds the "
                 f"{MAX_PACKET_SIZE_B}-byte protocol maximum"
             )
 
-        self._log(
-            f"Host {self.virtual_address} created a packet.\n"
-            f"     bytes={len(datagram)}"
-        )
-
         return datagram
 
     def _send_datagram(self, datagram, end_destination):
-        self._log(f"Host {self.virtual_address} is sending a packet.\n"
-                  f"     dest={end_destination}\n"
-                  f"     entry_router_address={self.entry_router_address}\n"
-                  f"     entry_real={self.entry_router_meta}\n")
+        head, _ = self._interpret_datagram(datagram)
+        self._log_event(
+            "send",
+            id=head["identifier"],
+            type=self._packet_type(head["type_flags"]),
+            src=head["source"],
+            dest=end_destination,
+            next_hop=self.entry_router_address,
+            ttl=head["TTL"],
+        )
         self.socket.sendto(datagram, self.entry_router_meta)
 
     def _keep_datagram(self, payload, header):
@@ -303,11 +335,16 @@ class Host:
             self.storage.append(payload)
 
         truncated = payload_results[:30] + ("..." if len(payload_results) > 30 else "")
-        self._log(
-            f"Host {self.virtual_address} is keeping a datagram.\n"
-            f"     from={header['source']}\n"
-            f"     len_payload={len(payload)}\n"
-            f"     payload={truncated}\n"
+        truncated = truncated.replace("\r", " ").replace("\n", " ")
+        self._log_event(
+            "receive",
+            id=header["identifier"],
+            type=self._packet_type(header["type_flags"]),
+            src=header["source"],
+            dest=header["destination"],
+            ttl=header["TTL"],
+            bytes=len(payload),
+            payload=truncated,
         )
 
     def _match_probe_reply(self, header) -> ProbeResult | None:
@@ -322,19 +359,26 @@ class Host:
         with self._probe_lock:
             probe = self._outstanding.get(identifier)
             if probe is None:
-                self._log(
-                    f"Host {self.virtual_address} ignored unmatched reply.\n"
-                    f"     id={identifier}\n"
-                    f"     src={source}\n"
+                self._log_event(
+                    "drop",
+                    _level=logging.WARNING,
+                    reason="unmatched_reply",
+                    id=identifier,
+                    type="reply",
+                    src=source,
+                    dest=self.virtual_address,
                 )
                 return None
             if source != probe.destination:
-                self._log(
-                    f"Host {self.virtual_address} ignored reply from "
-                    f"unexpected source.\n"
-                    f"     id={identifier}\n"
-                    f"     src={source}\n"
-                    f"     expected={probe.destination}\n"
+                self._log_event(
+                    "drop",
+                    _level=logging.WARNING,
+                    reason="unexpected_source",
+                    id=identifier,
+                    type="reply",
+                    src=source,
+                    dest=self.virtual_address,
+                    expected_src=probe.destination,
                 )
                 return None
             if now > probe.deadline:
@@ -349,10 +393,14 @@ class Host:
                     completed_at=now,
                 )
                 self._probe_results.append(result)
-                self._log(
-                    f"Host {self.virtual_address} ignored late reply.\n"
-                    f"     id={identifier}\n"
-                    f"     dest={probe.destination}\n"
+                self._log_event(
+                    "timeout",
+                    _level=logging.WARNING,
+                    reason="late_reply",
+                    id=identifier,
+                    type="reply",
+                    src=source,
+                    dest=probe.destination,
                 )
                 return result
 
@@ -367,29 +415,25 @@ class Host:
             )
             self._probe_results.append(result)
 
-        self._log(
-            f"Host {self.virtual_address} probe succeeded.\n"
-            f"     id={result.identifier}\n"
-            f"     dest={result.destination}\n"
-            f"     rtt={result.rtt:.6f}s\n"
-        )
         return result
 
     def _handle_datagram(self, data):
         """Process one received datagram (keep it, match probes, respond)."""
         head, payload = self._interpret_datagram(data)
 
-        self._log(f"Host {self.virtual_address} received packet.\n"
-                  f"     src={head['source']}\n"
-                  f"     dest={head['destination']}\n"
-                  f"     size_head={HEADER_SIZE}\n"
-                  f"     size_payload={len(payload)}\n")
-
         # Hosts are end points: anything not addressed to us is dropped
         # rather than bounced back into the network.
         if head["destination"] != self.virtual_address:
-            self._log(f"Host {self.virtual_address} dropped a packet "
-                      f"not addressed to it.\n")
+            self._log_event(
+                "drop",
+                _level=logging.WARNING,
+                reason="not_addressed_to_host",
+                id=head["identifier"],
+                type=self._packet_type(head["type_flags"]),
+                src=head["source"],
+                dest=head["destination"],
+                ttl=head["TTL"],
+            )
             return
 
         self._keep_datagram(payload, head)
@@ -487,13 +531,6 @@ class Host:
 
         # Recalculate recv timeout against this probe's deadline.
         self._wake_listener()
-
-        self._log(
-            f"Host {self.virtual_address} started probe.\n"
-            f"     id={identifier}\n"
-            f"     dest={destination}\n"
-            f"     timeout={timeout_s}s\n"
-        )
         return identifier
 
     # ------------------------------------------------------------------
@@ -524,22 +561,26 @@ class Host:
 
             if len(data) < HEADER_SIZE:
                 self.malformed_drops += 1
-                self._log(
-                    f"Host {self.virtual_address} rejected a malformed "
-                    f"packet: {len(data)}-byte datagram is shorter than "
-                    f"the {HEADER_SIZE}-byte header "
-                    f"(malformed_drops={self.malformed_drops}).\n"
+                self._log_event(
+                    "drop",
+                    _level=logging.WARNING,
+                    reason="malformed_too_short",
+                    bytes=len(data),
+                    min=HEADER_SIZE,
+                    malformed_drops=self.malformed_drops,
                 )
                 self._expire_probes()
                 continue
 
             if len(data) > MAX_PACKET_SIZE_B:
                 self.malformed_drops += 1
-                self._log(
-                    f"Host {self.virtual_address} rejected a malformed "
-                    f"packet: {len(data)}-byte datagram exceeds the "
-                    f"{MAX_PACKET_SIZE_B}-byte maximum "
-                    f"(malformed_drops={self.malformed_drops}).\n"
+                self._log_event(
+                    "drop",
+                    _level=logging.WARNING,
+                    reason="malformed_oversized",
+                    bytes=len(data),
+                    max=MAX_PACKET_SIZE_B,
+                    malformed_drops=self.malformed_drops,
                 )
                 self._expire_probes()
                 continue
@@ -547,17 +588,21 @@ class Host:
             try:
                 self._handle_datagram(data)
             except Exception as exc:  # Keep the listener alive on bad packets.
-                self._log(f"Host {self.virtual_address} failed to handle "
-                          f"a packet: {exc!r}")
+                self._log_event(
+                    "drop",
+                    _level=logging.ERROR,
+                    reason="handle_failed",
+                    error=repr(exc),
+                )
             finally:
                 self._expire_probes()
 
     def operation_loop(self):
 
-        self._log(f"Host {self.virtual_address} ready.\n")
+        self._log_event("start")
 
-        # TODO: Write new host messaging protocol. This code below relies on the "input" function, which, while
-        # functional for manual testing, wouldn't work with tests containing many simulated "users".
+        # TODO: Write new host messaging protocol. The "input" function works
+        # for manual testing, but not tests with many simulated "users".
         while not self._stop_event.is_set():
             try:
                 line = input("> ").strip()
@@ -581,14 +626,23 @@ class Host:
                 if not 0 <= destination <= 0xFFFF:
                     raise ValueError
             except ValueError:
-                self._log("Usage: [echo] <dest 0-65535> <message>")
+                self._log_event(
+                    "error",
+                    _level=logging.WARNING,
+                    reason="bad_command",
+                )
                 continue
 
             if use_probe:
                 try:
                     self.send_probe(destination, message)
                 except (OSError, RuntimeError, ValueError) as error:
-                    self._log(f"Probe send failed: {error}")
+                    self._log_event(
+                        "error",
+                        _level=logging.ERROR,
+                        reason="probe_send_failed",
+                        error=repr(error),
+                    )
                 continue
 
             try:
@@ -601,7 +655,12 @@ class Host:
                                                  message)
                 self._send_datagram(datagram, destination)
             except (OSError, ValueError) as error:
-                self._log(f"Send failed: {error}")
+                self._log_event(
+                    "error",
+                    _level=logging.ERROR,
+                    reason="send_failed",
+                    error=repr(error),
+                )
 
     def start(self) -> None:
         """Start the background listening thread if it is not already running."""
@@ -624,7 +683,7 @@ class Host:
             pass
         if self._listener_thread is not None:
             self._listener_thread.join(timeout=join_timeout)
-        self._log(f"Host {self.virtual_address} shut down.")
+        self._log_event("shutdown")
 
     def run(self):
         """Start the listener thread, then run the user-input loop."""

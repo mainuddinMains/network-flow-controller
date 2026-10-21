@@ -16,6 +16,7 @@ as separate processes can share one identifier by setting the
 
 import logging
 import os
+import sys
 import uuid
 
 RUN_ID = os.environ.get("MININET_RUN_ID") or uuid.uuid4().hex[:8]
@@ -26,12 +27,25 @@ _LOG_FORMAT = (
 )
 
 
+class _CurrentStderrHandler(logging.StreamHandler):
+    """Write to the process stderr that is current when a record is emitted.
+
+    The stream is resolved at emit time so a test capture that replaces
+    ``sys.stderr`` still receives records created earlier in the process.
+    """
+
+    def emit(self, record):
+        """Format ``record`` onto the current ``sys.stderr``."""
+        self.stream = sys.stderr
+        super().emit(record)
+
+
 def _configure_root() -> None:
     """Attach the shared stderr handler to the ``netlog`` logger once."""
     root = logging.getLogger(_ROOT_LOGGER_NAME)
     if getattr(root, "_netlog_configured", False):
         return
-    handler = logging.StreamHandler()
+    handler = _CurrentStderrHandler()
     handler.setFormatter(logging.Formatter(_LOG_FORMAT))
     root.addHandler(handler)
     root.setLevel(logging.INFO)

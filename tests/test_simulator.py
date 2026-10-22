@@ -10,7 +10,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 ROUTER_CONFIG_DIR = REPO_ROOT / "src" / "simulator" / "router configurations"
 HOST_CONFIG_DIR = REPO_ROOT / "src" / "simulator" / "host configurations"
 
-PROBE_COUNT = 1
+PROBE_COUNT = 20
 DEFAULT_TTL = 10
 REPLY_DEADLINE_S = 15.0
 

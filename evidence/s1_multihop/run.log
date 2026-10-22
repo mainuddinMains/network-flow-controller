@@ -1,0 +1,896 @@
+2026-10-21 16:32:49,928 | run=d12fdb49 | INFO | netlog.router-1 | event=init meta_ip=127.0.0.1 meta_port=60001 address=1 neighbors=[2, 3, 0] forwarding_table={5: 2, 0: 0} bandwidth=1000.0 buffer_size=500 inbound_queue_size=128 loss_chance=0.0 link_loss={} seed=2251477196
+2026-10-21 16:32:49,930 | run=d12fdb49 | INFO | netlog.router-2 | event=init meta_ip=127.0.0.1 meta_port=60002 address=2 neighbors=[1, 4] forwarding_table={5: 4, 0: 1} bandwidth=1000.0 buffer_size=500 inbound_queue_size=128 loss_chance=0.0 link_loss={} seed=1716995943
+2026-10-21 16:32:49,931 | run=d12fdb49 | INFO | netlog.router-3 | event=init meta_ip=127.0.0.1 meta_port=60003 address=3 neighbors=[1, 4] forwarding_table={5: 4, 0: 1} bandwidth=1000.0 buffer_size=500 inbound_queue_size=128 loss_chance=0.0 link_loss={} seed=3077877577
+2026-10-21 16:32:49,934 | run=d12fdb49 | INFO | netlog.router-4 | event=init meta_ip=127.0.0.1 meta_port=60004 address=4 neighbors=[2, 3, 5] forwarding_table={5: 5, 0: 2} bandwidth=1000.0 buffer_size=500 inbound_queue_size=128 loss_chance=0.0 link_loss={} seed=288420238
+2026-10-21 16:32:49,935 | run=d12fdb49 | INFO | netlog.host-0 | event=init meta_ip=127.0.0.1 meta_port=60000 address=0 entry_router=1 probe_timeout_s=1.0
+2026-10-21 16:32:49,937 | run=d12fdb49 | INFO | netlog.host-5 | event=init meta_ip=127.0.0.1 meta_port=60005 address=5 entry_router=4 probe_timeout_s=1.0
+2026-10-21 16:32:49,938 | run=d12fdb49 | INFO | netlog.router-1 | event=start
+2026-10-21 16:32:49,938 | run=d12fdb49 | INFO | netlog.router-2 | event=start
+2026-10-21 16:32:49,938 | run=d12fdb49 | INFO | netlog.router-3 | event=start
+2026-10-21 16:32:49,939 | run=d12fdb49 | INFO | netlog.router-4 | event=start
+2026-10-21 16:32:49,939 | run=d12fdb49 | INFO | netlog.host-0 | event=send id=0 type=echo src=0 dest=5 next_hop=1 ttl=64
+2026-10-21 16:32:49,939 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=0 type=echo src=0 dest=5 ttl=64 bytes=9
+2026-10-21 16:32:49,939 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=2 delay_s=0.01 delayed_sends=1 id=0 type=echo src=0 dest=5 ttl=63
+2026-10-21 16:32:49,952 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.01 id=0 type=echo src=0 dest=5 ttl=63
+2026-10-21 16:32:49,952 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=0 type=echo src=0 dest=5 ttl=63 bytes=9
+2026-10-21 16:32:49,952 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=4 delay_s=0.03 delayed_sends=1 id=0 type=echo src=0 dest=5 ttl=62
+2026-10-21 16:32:49,959 | run=d12fdb49 | INFO | netlog.host-0 | event=send id=1 type=echo src=0 dest=5 next_hop=1 ttl=64
+2026-10-21 16:32:49,960 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=1 type=echo src=0 dest=5 ttl=64 bytes=9
+2026-10-21 16:32:49,960 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=2 delay_s=0.01 delayed_sends=2 id=1 type=echo src=0 dest=5 ttl=63
+2026-10-21 16:32:49,980 | run=d12fdb49 | INFO | netlog.host-0 | event=send id=2 type=echo src=0 dest=5 next_hop=1 ttl=64
+2026-10-21 16:32:49,981 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=2 type=echo src=0 dest=5 ttl=64 bytes=9
+2026-10-21 16:32:49,981 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=2 delay_s=0.01 delayed_sends=3 id=2 type=echo src=0 dest=5 ttl=63
+2026-10-21 16:32:49,981 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.01 id=1 type=echo src=0 dest=5 ttl=63
+2026-10-21 16:32:49,981 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=1 type=echo src=0 dest=5 ttl=63 bytes=9
+2026-10-21 16:32:49,981 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=4 delay_s=0.03 delayed_sends=2 id=1 type=echo src=0 dest=5 ttl=62
+2026-10-21 16:32:49,984 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=4 next_hop_real=127.0.0.1:60004 delay_s=0.03 id=0 type=echo src=0 dest=5 ttl=62
+2026-10-21 16:32:49,984 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=0 type=echo src=0 dest=5 ttl=62 bytes=9
+2026-10-21 16:32:49,984 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=5 delay_s=0.015 delayed_sends=1 id=0 type=echo src=0 dest=5 ttl=61
+2026-10-21 16:32:49,999 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.01 id=2 type=echo src=0 dest=5 ttl=63
+2026-10-21 16:32:49,999 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=5 next_hop_real=127.0.0.1:60005 delay_s=0.015 id=0 type=echo src=0 dest=5 ttl=61
+2026-10-21 16:32:50,000 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=2 type=echo src=0 dest=5 ttl=63 bytes=9
+2026-10-21 16:32:50,000 | run=d12fdb49 | INFO | netlog.host-5 | event=receive id=0 type=echo src=0 dest=5 ttl=61 type_flags_binary=00000001 bytes=9 payload=A-probe-0
+2026-10-21 16:32:50,000 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=4 delay_s=0.03 delayed_sends=3 id=2 type=echo src=0 dest=5 ttl=62
+2026-10-21 16:32:50,000 | run=d12fdb49 | INFO | netlog.host-5 | event=send id=0 type=reply src=5 dest=0 next_hop=4 ttl=64
+2026-10-21 16:32:50,000 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=0 type=reply src=5 dest=0 ttl=64 bytes=9
+2026-10-21 16:32:50,000 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=2 delay_s=0.05 delayed_sends=2 id=0 type=reply src=5 dest=0 ttl=63
+2026-10-21 16:32:50,001 | run=d12fdb49 | INFO | netlog.host-0 | event=send id=3 type=echo src=0 dest=5 next_hop=1 ttl=64
+2026-10-21 16:32:50,001 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=3 type=echo src=0 dest=5 ttl=64 bytes=9
+2026-10-21 16:32:50,001 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=2 delay_s=0.01 delayed_sends=4 id=3 type=echo src=0 dest=5 ttl=63
+2026-10-21 16:32:50,015 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.01 id=3 type=echo src=0 dest=5 ttl=63
+2026-10-21 16:32:50,015 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=4 next_hop_real=127.0.0.1:60004 delay_s=0.03 id=1 type=echo src=0 dest=5 ttl=62
+2026-10-21 16:32:50,016 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=3 type=echo src=0 dest=5 ttl=63 bytes=9
+2026-10-21 16:32:50,016 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=1 type=echo src=0 dest=5 ttl=62 bytes=9
+2026-10-21 16:32:50,016 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=4 delay_s=0.03 delayed_sends=4 id=3 type=echo src=0 dest=5 ttl=62
+2026-10-21 16:32:50,016 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=5 delay_s=0.015 delayed_sends=3 id=1 type=echo src=0 dest=5 ttl=61
+2026-10-21 16:32:50,021 | run=d12fdb49 | INFO | netlog.host-0 | event=send id=4 type=echo src=0 dest=5 next_hop=1 ttl=64
+2026-10-21 16:32:50,021 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=4 type=echo src=0 dest=5 ttl=64 bytes=9
+2026-10-21 16:32:50,021 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=2 delay_s=0.01 delayed_sends=5 id=4 type=echo src=0 dest=5 ttl=63
+2026-10-21 16:32:50,031 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=4 next_hop_real=127.0.0.1:60004 delay_s=0.03 id=2 type=echo src=0 dest=5 ttl=62
+2026-10-21 16:32:50,031 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=2 type=echo src=0 dest=5 ttl=62 bytes=9
+2026-10-21 16:32:50,031 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=5 delay_s=0.015 delayed_sends=4 id=2 type=echo src=0 dest=5 ttl=61
+2026-10-21 16:32:50,031 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=5 next_hop_real=127.0.0.1:60005 delay_s=0.015 id=1 type=echo src=0 dest=5 ttl=61
+2026-10-21 16:32:50,031 | run=d12fdb49 | INFO | netlog.host-5 | event=receive id=1 type=echo src=0 dest=5 ttl=61 type_flags_binary=00000001 bytes=9 payload=A-probe-1
+2026-10-21 16:32:50,031 | run=d12fdb49 | INFO | netlog.host-5 | event=send id=1 type=reply src=5 dest=0 next_hop=4 ttl=64
+2026-10-21 16:32:50,031 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=1 type=reply src=5 dest=0 ttl=64 bytes=9
+2026-10-21 16:32:50,031 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=2 delay_s=0.05 delayed_sends=5 id=1 type=reply src=5 dest=0 ttl=63
+2026-10-21 16:32:50,042 | run=d12fdb49 | INFO | netlog.host-0 | event=send id=5 type=echo src=0 dest=5 next_hop=1 ttl=64
+2026-10-21 16:32:50,042 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=5 type=echo src=0 dest=5 ttl=64 bytes=9
+2026-10-21 16:32:50,042 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=2 delay_s=0.01 delayed_sends=6 id=5 type=echo src=0 dest=5 ttl=63
+2026-10-21 16:32:50,043 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.01 id=4 type=echo src=0 dest=5 ttl=63
+2026-10-21 16:32:50,043 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=4 type=echo src=0 dest=5 ttl=63 bytes=9
+2026-10-21 16:32:50,043 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=4 delay_s=0.03 delayed_sends=5 id=4 type=echo src=0 dest=5 ttl=62
+2026-10-21 16:32:50,046 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=4 next_hop_real=127.0.0.1:60004 delay_s=0.03 id=3 type=echo src=0 dest=5 ttl=62
+2026-10-21 16:32:50,046 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=5 next_hop_real=127.0.0.1:60005 delay_s=0.015 id=2 type=echo src=0 dest=5 ttl=61
+2026-10-21 16:32:50,046 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=3 type=echo src=0 dest=5 ttl=62 bytes=9
+2026-10-21 16:32:50,047 | run=d12fdb49 | INFO | netlog.host-5 | event=receive id=2 type=echo src=0 dest=5 ttl=61 type_flags_binary=00000001 bytes=9 payload=A-probe-2
+2026-10-21 16:32:50,047 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=5 delay_s=0.015 delayed_sends=6 id=3 type=echo src=0 dest=5 ttl=61
+2026-10-21 16:32:50,047 | run=d12fdb49 | INFO | netlog.host-5 | event=send id=2 type=reply src=5 dest=0 next_hop=4 ttl=64
+2026-10-21 16:32:50,047 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=2 type=reply src=5 dest=0 ttl=64 bytes=9
+2026-10-21 16:32:50,047 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=2 delay_s=0.05 delayed_sends=7 id=2 type=reply src=5 dest=0 ttl=63
+2026-10-21 16:32:50,062 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.01 id=5 type=echo src=0 dest=5 ttl=63
+2026-10-21 16:32:50,062 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.05 id=0 type=reply src=5 dest=0 ttl=63
+2026-10-21 16:32:50,062 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=5 next_hop_real=127.0.0.1:60005 delay_s=0.015 id=3 type=echo src=0 dest=5 ttl=61
+2026-10-21 16:32:50,062 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=5 type=echo src=0 dest=5 ttl=63 bytes=9
+2026-10-21 16:32:50,063 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=4 delay_s=0.03 delayed_sends=6 id=5 type=echo src=0 dest=5 ttl=62
+2026-10-21 16:32:50,063 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=0 type=reply src=5 dest=0 ttl=63 bytes=9
+2026-10-21 16:32:50,063 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=1 delay_s=0.01 delayed_sends=7 id=0 type=reply src=5 dest=0 ttl=62
+2026-10-21 16:32:50,063 | run=d12fdb49 | INFO | netlog.host-0 | event=send id=6 type=echo src=0 dest=5 next_hop=1 ttl=64
+2026-10-21 16:32:50,063 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=6 type=echo src=0 dest=5 ttl=64 bytes=9
+2026-10-21 16:32:50,064 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=2 delay_s=0.01 delayed_sends=7 id=6 type=echo src=0 dest=5 ttl=63
+2026-10-21 16:32:50,064 | run=d12fdb49 | INFO | netlog.host-5 | event=receive id=3 type=echo src=0 dest=5 ttl=61 type_flags_binary=00000001 bytes=9 payload=A-probe-3
+2026-10-21 16:32:50,064 | run=d12fdb49 | INFO | netlog.host-5 | event=send id=3 type=reply src=5 dest=0 next_hop=4 ttl=64
+2026-10-21 16:32:50,064 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=3 type=reply src=5 dest=0 ttl=64 bytes=9
+2026-10-21 16:32:50,064 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=2 delay_s=0.05 delayed_sends=8 id=3 type=reply src=5 dest=0 ttl=63
+2026-10-21 16:32:50,077 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.01 id=6 type=echo src=0 dest=5 ttl=63
+2026-10-21 16:32:50,077 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=1 next_hop_real=127.0.0.1:60001 delay_s=0.01 id=0 type=reply src=5 dest=0 ttl=62
+2026-10-21 16:32:50,078 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=4 next_hop_real=127.0.0.1:60004 delay_s=0.03 id=4 type=echo src=0 dest=5 ttl=62
+2026-10-21 16:32:50,078 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=6 type=echo src=0 dest=5 ttl=63 bytes=9
+2026-10-21 16:32:50,079 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=4 delay_s=0.03 delayed_sends=8 id=6 type=echo src=0 dest=5 ttl=62
+2026-10-21 16:32:50,079 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=0 type=reply src=5 dest=0 ttl=62 bytes=9
+2026-10-21 16:32:50,079 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=0 delay_s=0.005 delayed_sends=8 id=0 type=reply src=5 dest=0 ttl=61
+2026-10-21 16:32:50,079 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=4 type=echo src=0 dest=5 ttl=62 bytes=9
+2026-10-21 16:32:50,080 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=5 delay_s=0.015 delayed_sends=9 id=4 type=echo src=0 dest=5 ttl=61
+2026-10-21 16:32:50,084 | run=d12fdb49 | INFO | netlog.host-0 | event=send id=7 type=echo src=0 dest=5 next_hop=1 ttl=64
+2026-10-21 16:32:50,085 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=7 type=echo src=0 dest=5 ttl=64 bytes=9
+2026-10-21 16:32:50,085 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=2 delay_s=0.01 delayed_sends=9 id=7 type=echo src=0 dest=5 ttl=63
+2026-10-21 16:32:50,085 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=0 next_hop_real=127.0.0.1:60000 delay_s=0.005 id=0 type=reply src=5 dest=0 ttl=61
+2026-10-21 16:32:50,085 | run=d12fdb49 | INFO | netlog.host-0 | event=receive id=0 type=reply src=5 dest=0 ttl=61 type_flags_binary=00000010 bytes=9 payload=A-probe-0
+2026-10-21 16:32:50,092 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.05 id=1 type=reply src=5 dest=0 ttl=63
+2026-10-21 16:32:50,093 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=1 type=reply src=5 dest=0 ttl=63 bytes=9
+2026-10-21 16:32:50,093 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=1 delay_s=0.01 delayed_sends=9 id=1 type=reply src=5 dest=0 ttl=62
+2026-10-21 16:32:50,093 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=4 next_hop_real=127.0.0.1:60004 delay_s=0.03 id=5 type=echo src=0 dest=5 ttl=62
+2026-10-21 16:32:50,093 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=5 type=echo src=0 dest=5 ttl=62 bytes=9
+2026-10-21 16:32:50,093 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=5 delay_s=0.015 delayed_sends=10 id=5 type=echo src=0 dest=5 ttl=61
+2026-10-21 16:32:50,105 | run=d12fdb49 | INFO | netlog.host-0 | event=send id=8 type=echo src=0 dest=5 next_hop=1 ttl=64
+2026-10-21 16:32:50,106 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=8 type=echo src=0 dest=5 ttl=64 bytes=9
+2026-10-21 16:32:50,107 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=2 delay_s=0.01 delayed_sends=10 id=8 type=echo src=0 dest=5 ttl=63
+2026-10-21 16:32:50,107 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.01 id=7 type=echo src=0 dest=5 ttl=63
+2026-10-21 16:32:50,107 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=7 type=echo src=0 dest=5 ttl=63 bytes=9
+2026-10-21 16:32:50,107 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=4 delay_s=0.03 delayed_sends=10 id=7 type=echo src=0 dest=5 ttl=62
+2026-10-21 16:32:50,108 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=5 next_hop_real=127.0.0.1:60005 delay_s=0.015 id=4 type=echo src=0 dest=5 ttl=61
+2026-10-21 16:32:50,108 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=1 next_hop_real=127.0.0.1:60001 delay_s=0.01 id=1 type=reply src=5 dest=0 ttl=62
+2026-10-21 16:32:50,108 | run=d12fdb49 | INFO | netlog.host-5 | event=receive id=4 type=echo src=0 dest=5 ttl=61 type_flags_binary=00000001 bytes=9 payload=A-probe-4
+2026-10-21 16:32:50,109 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=4 next_hop_real=127.0.0.1:60004 delay_s=0.03 id=6 type=echo src=0 dest=5 ttl=62
+2026-10-21 16:32:50,109 | run=d12fdb49 | INFO | netlog.host-5 | event=send id=4 type=reply src=5 dest=0 next_hop=4 ttl=64
+2026-10-21 16:32:50,109 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.05 id=2 type=reply src=5 dest=0 ttl=63
+2026-10-21 16:32:50,109 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=1 type=reply src=5 dest=0 ttl=62 bytes=9
+2026-10-21 16:32:50,110 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=6 type=echo src=0 dest=5 ttl=62 bytes=9
+2026-10-21 16:32:50,110 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=5 next_hop_real=127.0.0.1:60005 delay_s=0.015 id=5 type=echo src=0 dest=5 ttl=61
+2026-10-21 16:32:50,110 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=2 type=reply src=5 dest=0 ttl=63 bytes=9
+2026-10-21 16:32:50,110 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=0 delay_s=0.005 delayed_sends=11 id=1 type=reply src=5 dest=0 ttl=61
+2026-10-21 16:32:50,111 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=5 delay_s=0.015 delayed_sends=11 id=6 type=echo src=0 dest=5 ttl=61
+2026-10-21 16:32:50,111 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=1 delay_s=0.01 delayed_sends=11 id=2 type=reply src=5 dest=0 ttl=62
+2026-10-21 16:32:50,111 | run=d12fdb49 | INFO | netlog.host-5 | event=receive id=5 type=echo src=0 dest=5 ttl=61 type_flags_binary=00000001 bytes=9 payload=A-probe-5
+2026-10-21 16:32:50,111 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=4 type=reply src=5 dest=0 ttl=64 bytes=9
+2026-10-21 16:32:50,111 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=2 delay_s=0.05 delayed_sends=12 id=4 type=reply src=5 dest=0 ttl=63
+2026-10-21 16:32:50,111 | run=d12fdb49 | INFO | netlog.host-5 | event=send id=5 type=reply src=5 dest=0 next_hop=4 ttl=64
+2026-10-21 16:32:50,112 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=5 type=reply src=5 dest=0 ttl=64 bytes=9
+2026-10-21 16:32:50,112 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=2 delay_s=0.05 delayed_sends=13 id=5 type=reply src=5 dest=0 ttl=63
+2026-10-21 16:32:50,123 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=1 next_hop_real=127.0.0.1:60001 delay_s=0.01 id=2 type=reply src=5 dest=0 ttl=62
+2026-10-21 16:32:50,123 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=0 next_hop_real=127.0.0.1:60000 delay_s=0.005 id=1 type=reply src=5 dest=0 ttl=61
+2026-10-21 16:32:50,124 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.05 id=3 type=reply src=5 dest=0 ttl=63
+2026-10-21 16:32:50,124 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.01 id=8 type=echo src=0 dest=5 ttl=63
+2026-10-21 16:32:50,124 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=2 type=reply src=5 dest=0 ttl=62 bytes=9
+2026-10-21 16:32:50,124 | run=d12fdb49 | INFO | netlog.host-0 | event=receive id=1 type=reply src=5 dest=0 ttl=61 type_flags_binary=00000010 bytes=9 payload=A-probe-1
+2026-10-21 16:32:50,125 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=0 delay_s=0.005 delayed_sends=12 id=2 type=reply src=5 dest=0 ttl=61
+2026-10-21 16:32:50,125 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=3 type=reply src=5 dest=0 ttl=63 bytes=9
+2026-10-21 16:32:50,125 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=1 delay_s=0.01 delayed_sends=12 id=3 type=reply src=5 dest=0 ttl=62
+2026-10-21 16:32:50,126 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=8 type=echo src=0 dest=5 ttl=63 bytes=9
+2026-10-21 16:32:50,126 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=4 delay_s=0.03 delayed_sends=13 id=8 type=echo src=0 dest=5 ttl=62
+2026-10-21 16:32:50,127 | run=d12fdb49 | INFO | netlog.host-0 | event=send id=9 type=echo src=0 dest=5 next_hop=1 ttl=64
+2026-10-21 16:32:50,127 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=9 type=echo src=0 dest=5 ttl=64 bytes=9
+2026-10-21 16:32:50,127 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=2 delay_s=0.01 delayed_sends=13 id=9 type=echo src=0 dest=5 ttl=63
+2026-10-21 16:32:50,139 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=0 next_hop_real=127.0.0.1:60000 delay_s=0.005 id=2 type=reply src=5 dest=0 ttl=61
+2026-10-21 16:32:50,139 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=5 next_hop_real=127.0.0.1:60005 delay_s=0.015 id=6 type=echo src=0 dest=5 ttl=61
+2026-10-21 16:32:50,139 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=1 next_hop_real=127.0.0.1:60001 delay_s=0.01 id=3 type=reply src=5 dest=0 ttl=62
+2026-10-21 16:32:50,139 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=4 next_hop_real=127.0.0.1:60004 delay_s=0.03 id=7 type=echo src=0 dest=5 ttl=62
+2026-10-21 16:32:50,139 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.01 id=9 type=echo src=0 dest=5 ttl=63
+2026-10-21 16:32:50,139 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=7 type=echo src=0 dest=5 ttl=62 bytes=9
+2026-10-21 16:32:50,139 | run=d12fdb49 | INFO | netlog.host-0 | event=receive id=2 type=reply src=5 dest=0 ttl=61 type_flags_binary=00000010 bytes=9 payload=A-probe-2
+2026-10-21 16:32:50,140 | run=d12fdb49 | INFO | netlog.host-5 | event=receive id=6 type=echo src=0 dest=5 ttl=61 type_flags_binary=00000001 bytes=9 payload=A-probe-6
+2026-10-21 16:32:50,140 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=3 type=reply src=5 dest=0 ttl=62 bytes=9
+2026-10-21 16:32:50,140 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=9 type=echo src=0 dest=5 ttl=63 bytes=9
+2026-10-21 16:32:50,140 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=5 delay_s=0.015 delayed_sends=14 id=7 type=echo src=0 dest=5 ttl=61
+2026-10-21 16:32:50,140 | run=d12fdb49 | INFO | netlog.host-5 | event=send id=6 type=reply src=5 dest=0 next_hop=4 ttl=64
+2026-10-21 16:32:50,140 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=0 delay_s=0.005 delayed_sends=14 id=3 type=reply src=5 dest=0 ttl=61
+2026-10-21 16:32:50,140 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=4 delay_s=0.03 delayed_sends=14 id=9 type=echo src=0 dest=5 ttl=62
+2026-10-21 16:32:50,141 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=6 type=reply src=5 dest=0 ttl=64 bytes=9
+2026-10-21 16:32:50,141 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=2 delay_s=0.05 delayed_sends=15 id=6 type=reply src=5 dest=0 ttl=63
+2026-10-21 16:32:50,147 | run=d12fdb49 | INFO | netlog.host-0 | event=send id=10 type=echo src=0 dest=5 next_hop=1 ttl=64
+2026-10-21 16:32:50,147 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=10 type=echo src=0 dest=5 ttl=64 bytes=10
+2026-10-21 16:32:50,147 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=2 delay_s=0.01 delayed_sends=15 id=10 type=echo src=0 dest=5 ttl=63
+2026-10-21 16:32:50,147 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=0 next_hop_real=127.0.0.1:60000 delay_s=0.005 id=3 type=reply src=5 dest=0 ttl=61
+2026-10-21 16:32:50,147 | run=d12fdb49 | INFO | netlog.host-0 | event=receive id=3 type=reply src=5 dest=0 ttl=61 type_flags_binary=00000010 bytes=9 payload=A-probe-3
+2026-10-21 16:32:50,168 | run=d12fdb49 | INFO | netlog.host-0 | event=send id=11 type=echo src=0 dest=5 next_hop=1 ttl=64
+2026-10-21 16:32:50,168 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=11 type=echo src=0 dest=5 ttl=64 bytes=10
+2026-10-21 16:32:50,168 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=2 delay_s=0.01 delayed_sends=16 id=11 type=echo src=0 dest=5 ttl=63
+2026-10-21 16:32:50,169 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.01 id=10 type=echo src=0 dest=5 ttl=63
+2026-10-21 16:32:50,169 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=10 type=echo src=0 dest=5 ttl=63 bytes=10
+2026-10-21 16:32:50,169 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=4 delay_s=0.03 delayed_sends=15 id=10 type=echo src=0 dest=5 ttl=62
+2026-10-21 16:32:50,169 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=4 next_hop_real=127.0.0.1:60004 delay_s=0.03 id=8 type=echo src=0 dest=5 ttl=62
+2026-10-21 16:32:50,169 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=8 type=echo src=0 dest=5 ttl=62 bytes=9
+2026-10-21 16:32:50,169 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=5 delay_s=0.015 delayed_sends=16 id=8 type=echo src=0 dest=5 ttl=61
+2026-10-21 16:32:50,169 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=5 next_hop_real=127.0.0.1:60005 delay_s=0.015 id=7 type=echo src=0 dest=5 ttl=61
+2026-10-21 16:32:50,169 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.05 id=4 type=reply src=5 dest=0 ttl=63
+2026-10-21 16:32:50,169 | run=d12fdb49 | INFO | netlog.host-5 | event=receive id=7 type=echo src=0 dest=5 ttl=61 type_flags_binary=00000001 bytes=9 payload=A-probe-7
+2026-10-21 16:32:50,169 | run=d12fdb49 | INFO | netlog.host-5 | event=send id=7 type=reply src=5 dest=0 next_hop=4 ttl=64
+2026-10-21 16:32:50,169 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.05 id=5 type=reply src=5 dest=0 ttl=63
+2026-10-21 16:32:50,170 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=4 type=reply src=5 dest=0 ttl=63 bytes=9
+2026-10-21 16:32:50,170 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=1 delay_s=0.01 delayed_sends=16 id=4 type=reply src=5 dest=0 ttl=62
+2026-10-21 16:32:50,170 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=5 type=reply src=5 dest=0 ttl=63 bytes=9
+2026-10-21 16:32:50,170 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=1 delay_s=0.01 delayed_sends=17 id=5 type=reply src=5 dest=0 ttl=62
+2026-10-21 16:32:50,170 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=7 type=reply src=5 dest=0 ttl=64 bytes=9
+2026-10-21 16:32:50,170 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=2 delay_s=0.05 delayed_sends=17 id=7 type=reply src=5 dest=0 ttl=63
+2026-10-21 16:32:50,186 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=4 next_hop_real=127.0.0.1:60004 delay_s=0.03 id=9 type=echo src=0 dest=5 ttl=62
+2026-10-21 16:32:50,186 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.01 id=11 type=echo src=0 dest=5 ttl=63
+2026-10-21 16:32:50,186 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=5 next_hop_real=127.0.0.1:60005 delay_s=0.015 id=8 type=echo src=0 dest=5 ttl=61
+2026-10-21 16:32:50,187 | run=d12fdb49 | INFO | netlog.host-5 | event=receive id=8 type=echo src=0 dest=5 ttl=61 type_flags_binary=00000001 bytes=9 payload=A-probe-8
+2026-10-21 16:32:50,187 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=1 next_hop_real=127.0.0.1:60001 delay_s=0.01 id=4 type=reply src=5 dest=0 ttl=62
+2026-10-21 16:32:50,187 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=9 type=echo src=0 dest=5 ttl=62 bytes=9
+2026-10-21 16:32:50,187 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=11 type=echo src=0 dest=5 ttl=63 bytes=10
+2026-10-21 16:32:50,187 | run=d12fdb49 | INFO | netlog.host-5 | event=send id=8 type=reply src=5 dest=0 next_hop=4 ttl=64
+2026-10-21 16:32:50,187 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=5 delay_s=0.015 delayed_sends=18 id=9 type=echo src=0 dest=5 ttl=61
+2026-10-21 16:32:50,188 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=4 delay_s=0.03 delayed_sends=18 id=11 type=echo src=0 dest=5 ttl=62
+2026-10-21 16:32:50,188 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=4 type=reply src=5 dest=0 ttl=62 bytes=9
+2026-10-21 16:32:50,188 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=1 next_hop_real=127.0.0.1:60001 delay_s=0.01 id=5 type=reply src=5 dest=0 ttl=62
+2026-10-21 16:32:50,188 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=8 type=reply src=5 dest=0 ttl=64 bytes=9
+2026-10-21 16:32:50,188 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=0 delay_s=0.005 delayed_sends=17 id=4 type=reply src=5 dest=0 ttl=61
+2026-10-21 16:32:50,188 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=2 delay_s=0.05 delayed_sends=19 id=8 type=reply src=5 dest=0 ttl=63
+2026-10-21 16:32:50,189 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=5 type=reply src=5 dest=0 ttl=62 bytes=9
+2026-10-21 16:32:50,189 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=0 delay_s=0.005 delayed_sends=18 id=5 type=reply src=5 dest=0 ttl=61
+2026-10-21 16:32:50,189 | run=d12fdb49 | INFO | netlog.host-0 | event=send id=12 type=echo src=0 dest=5 next_hop=1 ttl=64
+2026-10-21 16:32:50,189 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=12 type=echo src=0 dest=5 ttl=64 bytes=10
+2026-10-21 16:32:50,189 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=2 delay_s=0.01 delayed_sends=19 id=12 type=echo src=0 dest=5 ttl=63
+2026-10-21 16:32:50,202 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=4 next_hop_real=127.0.0.1:60004 delay_s=0.03 id=10 type=echo src=0 dest=5 ttl=62
+2026-10-21 16:32:50,202 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.05 id=6 type=reply src=5 dest=0 ttl=63
+2026-10-21 16:32:50,202 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=0 next_hop_real=127.0.0.1:60000 delay_s=0.005 id=4 type=reply src=5 dest=0 ttl=61
+2026-10-21 16:32:50,203 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=10 type=echo src=0 dest=5 ttl=62 bytes=10
+2026-10-21 16:32:50,203 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=5 next_hop_real=127.0.0.1:60005 delay_s=0.015 id=9 type=echo src=0 dest=5 ttl=61
+2026-10-21 16:32:50,203 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=6 type=reply src=5 dest=0 ttl=63 bytes=9
+2026-10-21 16:32:50,203 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=5 delay_s=0.015 delayed_sends=20 id=10 type=echo src=0 dest=5 ttl=61
+2026-10-21 16:32:50,203 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=0 next_hop_real=127.0.0.1:60000 delay_s=0.005 id=5 type=reply src=5 dest=0 ttl=61
+2026-10-21 16:32:50,203 | run=d12fdb49 | INFO | netlog.host-0 | event=receive id=4 type=reply src=5 dest=0 ttl=61 type_flags_binary=00000010 bytes=9 payload=A-probe-4
+2026-10-21 16:32:50,204 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=1 delay_s=0.01 delayed_sends=19 id=6 type=reply src=5 dest=0 ttl=62
+2026-10-21 16:32:50,204 | run=d12fdb49 | INFO | netlog.host-5 | event=receive id=9 type=echo src=0 dest=5 ttl=61 type_flags_binary=00000001 bytes=9 payload=A-probe-9
+2026-10-21 16:32:50,204 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.01 id=12 type=echo src=0 dest=5 ttl=63
+2026-10-21 16:32:50,204 | run=d12fdb49 | INFO | netlog.host-0 | event=receive id=5 type=reply src=5 dest=0 ttl=61 type_flags_binary=00000010 bytes=9 payload=A-probe-5
+2026-10-21 16:32:50,205 | run=d12fdb49 | INFO | netlog.host-5 | event=send id=9 type=reply src=5 dest=0 next_hop=4 ttl=64
+2026-10-21 16:32:50,205 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=12 type=echo src=0 dest=5 ttl=63 bytes=10
+2026-10-21 16:32:50,205 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=4 delay_s=0.03 delayed_sends=20 id=12 type=echo src=0 dest=5 ttl=62
+2026-10-21 16:32:50,205 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=9 type=reply src=5 dest=0 ttl=64 bytes=9
+2026-10-21 16:32:50,206 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=2 delay_s=0.05 delayed_sends=21 id=9 type=reply src=5 dest=0 ttl=63
+2026-10-21 16:32:50,209 | run=d12fdb49 | INFO | netlog.host-0 | event=send id=13 type=echo src=0 dest=5 next_hop=1 ttl=64
+2026-10-21 16:32:50,210 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=13 type=echo src=0 dest=5 ttl=64 bytes=10
+2026-10-21 16:32:50,210 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=2 delay_s=0.01 delayed_sends=20 id=13 type=echo src=0 dest=5 ttl=63
+2026-10-21 16:32:50,217 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=1 next_hop_real=127.0.0.1:60001 delay_s=0.01 id=6 type=reply src=5 dest=0 ttl=62
+2026-10-21 16:32:50,217 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=6 type=reply src=5 dest=0 ttl=62 bytes=9
+2026-10-21 16:32:50,218 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=0 delay_s=0.005 delayed_sends=21 id=6 type=reply src=5 dest=0 ttl=61
+2026-10-21 16:32:50,230 | run=d12fdb49 | INFO | netlog.host-0 | event=send id=14 type=echo src=0 dest=5 next_hop=1 ttl=64
+2026-10-21 16:32:50,231 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=14 type=echo src=0 dest=5 ttl=64 bytes=10
+2026-10-21 16:32:50,231 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=2 delay_s=0.01 delayed_sends=22 id=14 type=echo src=0 dest=5 ttl=63
+2026-10-21 16:32:50,231 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.01 id=13 type=echo src=0 dest=5 ttl=63
+2026-10-21 16:32:50,232 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=0 next_hop_real=127.0.0.1:60000 delay_s=0.005 id=6 type=reply src=5 dest=0 ttl=61
+2026-10-21 16:32:50,232 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=13 type=echo src=0 dest=5 ttl=63 bytes=10
+2026-10-21 16:32:50,232 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=4 delay_s=0.03 delayed_sends=21 id=13 type=echo src=0 dest=5 ttl=62
+2026-10-21 16:32:50,232 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=4 next_hop_real=127.0.0.1:60004 delay_s=0.03 id=11 type=echo src=0 dest=5 ttl=62
+2026-10-21 16:32:50,233 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=5 next_hop_real=127.0.0.1:60005 delay_s=0.015 id=10 type=echo src=0 dest=5 ttl=61
+2026-10-21 16:32:50,233 | run=d12fdb49 | INFO | netlog.host-0 | event=receive id=6 type=reply src=5 dest=0 ttl=61 type_flags_binary=00000010 bytes=9 payload=A-probe-6
+2026-10-21 16:32:50,233 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=11 type=echo src=0 dest=5 ttl=62 bytes=10
+2026-10-21 16:32:50,234 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.05 id=7 type=reply src=5 dest=0 ttl=63
+2026-10-21 16:32:50,234 | run=d12fdb49 | INFO | netlog.host-5 | event=receive id=10 type=echo src=0 dest=5 ttl=61 type_flags_binary=00000001 bytes=10 payload=A-probe-10
+2026-10-21 16:32:50,235 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=5 delay_s=0.015 delayed_sends=22 id=11 type=echo src=0 dest=5 ttl=61
+2026-10-21 16:32:50,235 | run=d12fdb49 | INFO | netlog.host-5 | event=send id=10 type=reply src=5 dest=0 next_hop=4 ttl=64
+2026-10-21 16:32:50,235 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=7 type=reply src=5 dest=0 ttl=63 bytes=9
+2026-10-21 16:32:50,235 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=1 delay_s=0.01 delayed_sends=22 id=7 type=reply src=5 dest=0 ttl=62
+2026-10-21 16:32:50,236 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=4 next_hop_real=127.0.0.1:60004 delay_s=0.03 id=12 type=echo src=0 dest=5 ttl=62
+2026-10-21 16:32:50,236 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=10 type=reply src=5 dest=0 ttl=64 bytes=10
+2026-10-21 16:32:50,236 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=2 delay_s=0.05 delayed_sends=23 id=10 type=reply src=5 dest=0 ttl=63
+2026-10-21 16:32:50,236 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=12 type=echo src=0 dest=5 ttl=62 bytes=10
+2026-10-21 16:32:50,236 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=5 delay_s=0.015 delayed_sends=24 id=12 type=echo src=0 dest=5 ttl=61
+2026-10-21 16:32:50,248 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.01 id=14 type=echo src=0 dest=5 ttl=63
+2026-10-21 16:32:50,248 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.05 id=8 type=reply src=5 dest=0 ttl=63
+2026-10-21 16:32:50,249 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=1 next_hop_real=127.0.0.1:60001 delay_s=0.01 id=7 type=reply src=5 dest=0 ttl=62
+2026-10-21 16:32:50,250 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=14 type=echo src=0 dest=5 ttl=63 bytes=10
+2026-10-21 16:32:50,250 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=4 delay_s=0.03 delayed_sends=23 id=14 type=echo src=0 dest=5 ttl=62
+2026-10-21 16:32:50,250 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=5 next_hop_real=127.0.0.1:60005 delay_s=0.015 id=11 type=echo src=0 dest=5 ttl=61
+2026-10-21 16:32:50,251 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=8 type=reply src=5 dest=0 ttl=63 bytes=9
+2026-10-21 16:32:50,251 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=1 delay_s=0.01 delayed_sends=24 id=8 type=reply src=5 dest=0 ttl=62
+2026-10-21 16:32:50,251 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=7 type=reply src=5 dest=0 ttl=62 bytes=9
+2026-10-21 16:32:50,251 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=0 delay_s=0.005 delayed_sends=23 id=7 type=reply src=5 dest=0 ttl=61
+2026-10-21 16:32:50,251 | run=d12fdb49 | INFO | netlog.host-5 | event=receive id=11 type=echo src=0 dest=5 ttl=61 type_flags_binary=00000001 bytes=10 payload=A-probe-11
+2026-10-21 16:32:50,251 | run=d12fdb49 | INFO | netlog.host-0 | event=send id=15 type=echo src=0 dest=5 next_hop=1 ttl=64
+2026-10-21 16:32:50,251 | run=d12fdb49 | INFO | netlog.host-5 | event=send id=11 type=reply src=5 dest=0 next_hop=4 ttl=64
+2026-10-21 16:32:50,252 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=11 type=reply src=5 dest=0 ttl=64 bytes=10
+2026-10-21 16:32:50,252 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=2 delay_s=0.05 delayed_sends=25 id=11 type=reply src=5 dest=0 ttl=63
+2026-10-21 16:32:50,252 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=5 next_hop_real=127.0.0.1:60005 delay_s=0.015 id=12 type=echo src=0 dest=5 ttl=61
+2026-10-21 16:32:50,252 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=15 type=echo src=0 dest=5 ttl=64 bytes=10
+2026-10-21 16:32:50,252 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=2 delay_s=0.01 delayed_sends=24 id=15 type=echo src=0 dest=5 ttl=63
+2026-10-21 16:32:50,252 | run=d12fdb49 | INFO | netlog.host-5 | event=receive id=12 type=echo src=0 dest=5 ttl=61 type_flags_binary=00000001 bytes=10 payload=A-probe-12
+2026-10-21 16:32:50,253 | run=d12fdb49 | INFO | netlog.host-5 | event=send id=12 type=reply src=5 dest=0 next_hop=4 ttl=64
+2026-10-21 16:32:50,253 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=12 type=reply src=5 dest=0 ttl=64 bytes=10
+2026-10-21 16:32:50,253 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=2 delay_s=0.05 delayed_sends=26 id=12 type=reply src=5 dest=0 ttl=63
+2026-10-21 16:32:50,263 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=1 next_hop_real=127.0.0.1:60001 delay_s=0.01 id=8 type=reply src=5 dest=0 ttl=62
+2026-10-21 16:32:50,264 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.05 id=9 type=reply src=5 dest=0 ttl=63
+2026-10-21 16:32:50,264 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=0 next_hop_real=127.0.0.1:60000 delay_s=0.005 id=7 type=reply src=5 dest=0 ttl=61
+2026-10-21 16:32:50,264 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.01 id=15 type=echo src=0 dest=5 ttl=63
+2026-10-21 16:32:50,264 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=4 next_hop_real=127.0.0.1:60004 delay_s=0.03 id=13 type=echo src=0 dest=5 ttl=62
+2026-10-21 16:32:50,264 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=9 type=reply src=5 dest=0 ttl=63 bytes=9
+2026-10-21 16:32:50,264 | run=d12fdb49 | INFO | netlog.host-0 | event=receive id=7 type=reply src=5 dest=0 ttl=61 type_flags_binary=00000010 bytes=9 payload=A-probe-7
+2026-10-21 16:32:50,264 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=8 type=reply src=5 dest=0 ttl=62 bytes=9
+2026-10-21 16:32:50,264 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=1 delay_s=0.01 delayed_sends=25 id=9 type=reply src=5 dest=0 ttl=62
+2026-10-21 16:32:50,264 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=13 type=echo src=0 dest=5 ttl=62 bytes=10
+2026-10-21 16:32:50,265 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=0 delay_s=0.005 delayed_sends=25 id=8 type=reply src=5 dest=0 ttl=61
+2026-10-21 16:32:50,265 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=15 type=echo src=0 dest=5 ttl=63 bytes=10
+2026-10-21 16:32:50,265 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=5 delay_s=0.015 delayed_sends=27 id=13 type=echo src=0 dest=5 ttl=61
+2026-10-21 16:32:50,265 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=4 delay_s=0.03 delayed_sends=26 id=15 type=echo src=0 dest=5 ttl=62
+2026-10-21 16:32:50,272 | run=d12fdb49 | INFO | netlog.host-0 | event=send id=16 type=echo src=0 dest=5 next_hop=1 ttl=64
+2026-10-21 16:32:50,272 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=16 type=echo src=0 dest=5 ttl=64 bytes=10
+2026-10-21 16:32:50,272 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=2 delay_s=0.01 delayed_sends=26 id=16 type=echo src=0 dest=5 ttl=63
+2026-10-21 16:32:50,272 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=0 next_hop_real=127.0.0.1:60000 delay_s=0.005 id=8 type=reply src=5 dest=0 ttl=61
+2026-10-21 16:32:50,273 | run=d12fdb49 | INFO | netlog.host-0 | event=receive id=8 type=reply src=5 dest=0 ttl=61 type_flags_binary=00000010 bytes=9 payload=A-probe-8
+2026-10-21 16:32:50,279 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=1 next_hop_real=127.0.0.1:60001 delay_s=0.01 id=9 type=reply src=5 dest=0 ttl=62
+2026-10-21 16:32:50,279 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=9 type=reply src=5 dest=0 ttl=62 bytes=9
+2026-10-21 16:32:50,279 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=0 delay_s=0.005 delayed_sends=27 id=9 type=reply src=5 dest=0 ttl=61
+2026-10-21 16:32:50,292 | run=d12fdb49 | INFO | netlog.host-0 | event=send id=17 type=echo src=0 dest=5 next_hop=1 ttl=64
+2026-10-21 16:32:50,293 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=17 type=echo src=0 dest=5 ttl=64 bytes=10
+2026-10-21 16:32:50,293 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=2 delay_s=0.01 delayed_sends=28 id=17 type=echo src=0 dest=5 ttl=63
+2026-10-21 16:32:50,293 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.01 id=16 type=echo src=0 dest=5 ttl=63
+2026-10-21 16:32:50,293 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=0 next_hop_real=127.0.0.1:60000 delay_s=0.005 id=9 type=reply src=5 dest=0 ttl=61
+2026-10-21 16:32:50,294 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=16 type=echo src=0 dest=5 ttl=63 bytes=10
+2026-10-21 16:32:50,294 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=4 delay_s=0.03 delayed_sends=27 id=16 type=echo src=0 dest=5 ttl=62
+2026-10-21 16:32:50,294 | run=d12fdb49 | INFO | netlog.host-0 | event=receive id=9 type=reply src=5 dest=0 ttl=61 type_flags_binary=00000010 bytes=9 payload=A-probe-9
+2026-10-21 16:32:50,294 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=4 next_hop_real=127.0.0.1:60004 delay_s=0.03 id=14 type=echo src=0 dest=5 ttl=62
+2026-10-21 16:32:50,295 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=14 type=echo src=0 dest=5 ttl=62 bytes=10
+2026-10-21 16:32:50,295 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=5 delay_s=0.015 delayed_sends=28 id=14 type=echo src=0 dest=5 ttl=61
+2026-10-21 16:32:50,295 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=5 next_hop_real=127.0.0.1:60005 delay_s=0.015 id=13 type=echo src=0 dest=5 ttl=61
+2026-10-21 16:32:50,295 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.05 id=10 type=reply src=5 dest=0 ttl=63
+2026-10-21 16:32:50,295 | run=d12fdb49 | INFO | netlog.host-5 | event=receive id=13 type=echo src=0 dest=5 ttl=61 type_flags_binary=00000001 bytes=10 payload=A-probe-13
+2026-10-21 16:32:50,295 | run=d12fdb49 | INFO | netlog.host-5 | event=send id=13 type=reply src=5 dest=0 next_hop=4 ttl=64
+2026-10-21 16:32:50,296 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=10 type=reply src=5 dest=0 ttl=63 bytes=10
+2026-10-21 16:32:50,296 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=13 type=reply src=5 dest=0 ttl=64 bytes=10
+2026-10-21 16:32:50,296 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=1 delay_s=0.01 delayed_sends=28 id=10 type=reply src=5 dest=0 ttl=62
+2026-10-21 16:32:50,296 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=4 next_hop_real=127.0.0.1:60004 delay_s=0.03 id=15 type=echo src=0 dest=5 ttl=62
+2026-10-21 16:32:50,296 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=2 delay_s=0.05 delayed_sends=29 id=13 type=reply src=5 dest=0 ttl=63
+2026-10-21 16:32:50,296 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=15 type=echo src=0 dest=5 ttl=62 bytes=10
+2026-10-21 16:32:50,296 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=5 delay_s=0.015 delayed_sends=30 id=15 type=echo src=0 dest=5 ttl=61
+2026-10-21 16:32:50,310 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.01 id=17 type=echo src=0 dest=5 ttl=63
+2026-10-21 16:32:50,310 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=1 next_hop_real=127.0.0.1:60001 delay_s=0.01 id=10 type=reply src=5 dest=0 ttl=62
+2026-10-21 16:32:50,311 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.05 id=11 type=reply src=5 dest=0 ttl=63
+2026-10-21 16:32:50,311 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.05 id=12 type=reply src=5 dest=0 ttl=63
+2026-10-21 16:32:50,311 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=10 type=reply src=5 dest=0 ttl=62 bytes=10
+2026-10-21 16:32:50,311 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=11 type=reply src=5 dest=0 ttl=63 bytes=10
+2026-10-21 16:32:50,311 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=5 next_hop_real=127.0.0.1:60005 delay_s=0.015 id=14 type=echo src=0 dest=5 ttl=61
+2026-10-21 16:32:50,312 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=0 delay_s=0.005 delayed_sends=29 id=10 type=reply src=5 dest=0 ttl=61
+2026-10-21 16:32:50,312 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=1 delay_s=0.01 delayed_sends=29 id=11 type=reply src=5 dest=0 ttl=62
+2026-10-21 16:32:50,312 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=17 type=echo src=0 dest=5 ttl=63 bytes=10
+2026-10-21 16:32:50,312 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=5 next_hop_real=127.0.0.1:60005 delay_s=0.015 id=15 type=echo src=0 dest=5 ttl=61
+2026-10-21 16:32:50,312 | run=d12fdb49 | INFO | netlog.host-5 | event=receive id=14 type=echo src=0 dest=5 ttl=61 type_flags_binary=00000001 bytes=10 payload=A-probe-14
+2026-10-21 16:32:50,312 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=4 delay_s=0.03 delayed_sends=30 id=17 type=echo src=0 dest=5 ttl=62
+2026-10-21 16:32:50,312 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=12 type=reply src=5 dest=0 ttl=63 bytes=10
+2026-10-21 16:32:50,312 | run=d12fdb49 | INFO | netlog.host-5 | event=send id=14 type=reply src=5 dest=0 next_hop=4 ttl=64
+2026-10-21 16:32:50,313 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=1 delay_s=0.01 delayed_sends=31 id=12 type=reply src=5 dest=0 ttl=62
+2026-10-21 16:32:50,313 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=14 type=reply src=5 dest=0 ttl=64 bytes=10
+2026-10-21 16:32:50,313 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=2 delay_s=0.05 delayed_sends=31 id=14 type=reply src=5 dest=0 ttl=63
+2026-10-21 16:32:50,313 | run=d12fdb49 | INFO | netlog.host-5 | event=receive id=15 type=echo src=0 dest=5 ttl=61 type_flags_binary=00000001 bytes=10 payload=A-probe-15
+2026-10-21 16:32:50,313 | run=d12fdb49 | INFO | netlog.host-5 | event=send id=15 type=reply src=5 dest=0 next_hop=4 ttl=64
+2026-10-21 16:32:50,313 | run=d12fdb49 | INFO | netlog.host-0 | event=send id=18 type=echo src=0 dest=5 next_hop=1 ttl=64
+2026-10-21 16:32:50,313 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=15 type=reply src=5 dest=0 ttl=64 bytes=10
+2026-10-21 16:32:50,313 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=2 delay_s=0.05 delayed_sends=32 id=15 type=reply src=5 dest=0 ttl=63
+2026-10-21 16:32:50,313 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=18 type=echo src=0 dest=5 ttl=64 bytes=10
+2026-10-21 16:32:50,314 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=2 delay_s=0.01 delayed_sends=30 id=18 type=echo src=0 dest=5 ttl=63
+2026-10-21 16:32:50,326 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=0 next_hop_real=127.0.0.1:60000 delay_s=0.005 id=10 type=reply src=5 dest=0 ttl=61
+2026-10-21 16:32:50,326 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=1 next_hop_real=127.0.0.1:60001 delay_s=0.01 id=11 type=reply src=5 dest=0 ttl=62
+2026-10-21 16:32:50,326 | run=d12fdb49 | INFO | netlog.host-0 | event=receive id=10 type=reply src=5 dest=0 ttl=61 type_flags_binary=00000010 bytes=10 payload=A-probe-10
+2026-10-21 16:32:50,326 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.01 id=18 type=echo src=0 dest=5 ttl=63
+2026-10-21 16:32:50,326 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=1 next_hop_real=127.0.0.1:60001 delay_s=0.01 id=12 type=reply src=5 dest=0 ttl=62
+2026-10-21 16:32:50,327 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=18 type=echo src=0 dest=5 ttl=63 bytes=10
+2026-10-21 16:32:50,327 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=11 type=reply src=5 dest=0 ttl=62 bytes=10
+2026-10-21 16:32:50,327 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=4 delay_s=0.03 delayed_sends=32 id=18 type=echo src=0 dest=5 ttl=62
+2026-10-21 16:32:50,327 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=0 delay_s=0.005 delayed_sends=31 id=11 type=reply src=5 dest=0 ttl=61
+2026-10-21 16:32:50,327 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=4 next_hop_real=127.0.0.1:60004 delay_s=0.03 id=16 type=echo src=0 dest=5 ttl=62
+2026-10-21 16:32:50,327 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=12 type=reply src=5 dest=0 ttl=62 bytes=10
+2026-10-21 16:32:50,328 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=0 delay_s=0.005 delayed_sends=32 id=12 type=reply src=5 dest=0 ttl=61
+2026-10-21 16:32:50,328 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=16 type=echo src=0 dest=5 ttl=62 bytes=10
+2026-10-21 16:32:50,328 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=5 delay_s=0.015 delayed_sends=33 id=16 type=echo src=0 dest=5 ttl=61
+2026-10-21 16:32:50,334 | run=d12fdb49 | INFO | netlog.host-0 | event=send id=19 type=echo src=0 dest=5 next_hop=1 ttl=64
+2026-10-21 16:32:50,334 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=19 type=echo src=0 dest=5 ttl=64 bytes=10
+2026-10-21 16:32:50,334 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=2 delay_s=0.01 delayed_sends=33 id=19 type=echo src=0 dest=5 ttl=63
+2026-10-21 16:32:50,334 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=0 next_hop_real=127.0.0.1:60000 delay_s=0.005 id=11 type=reply src=5 dest=0 ttl=61
+2026-10-21 16:32:50,334 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=0 next_hop_real=127.0.0.1:60000 delay_s=0.005 id=12 type=reply src=5 dest=0 ttl=61
+2026-10-21 16:32:50,334 | run=d12fdb49 | INFO | netlog.host-0 | event=receive id=11 type=reply src=5 dest=0 ttl=61 type_flags_binary=00000010 bytes=10 payload=A-probe-11
+2026-10-21 16:32:50,335 | run=d12fdb49 | INFO | netlog.host-0 | event=receive id=12 type=reply src=5 dest=0 ttl=61 type_flags_binary=00000010 bytes=10 payload=A-probe-12
+2026-10-21 16:32:50,355 | run=d12fdb49 | INFO | netlog.host-5 | event=send id=0 type=echo src=5 dest=0 next_hop=4 ttl=64
+2026-10-21 16:32:50,356 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=0 type=echo src=5 dest=0 ttl=64 bytes=9
+2026-10-21 16:32:50,356 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=2 delay_s=0.05 delayed_sends=34 id=0 type=echo src=5 dest=0 ttl=63
+2026-10-21 16:32:50,356 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=5 next_hop_real=127.0.0.1:60005 delay_s=0.015 id=16 type=echo src=0 dest=5 ttl=61
+2026-10-21 16:32:50,356 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.05 id=13 type=reply src=5 dest=0 ttl=63
+2026-10-21 16:32:50,357 | run=d12fdb49 | INFO | netlog.host-5 | event=receive id=16 type=echo src=0 dest=5 ttl=61 type_flags_binary=00000001 bytes=10 payload=A-probe-16
+2026-10-21 16:32:50,357 | run=d12fdb49 | INFO | netlog.host-5 | event=send id=16 type=reply src=5 dest=0 next_hop=4 ttl=64
+2026-10-21 16:32:50,357 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.01 id=19 type=echo src=0 dest=5 ttl=63
+2026-10-21 16:32:50,357 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=4 next_hop_real=127.0.0.1:60004 delay_s=0.03 id=17 type=echo src=0 dest=5 ttl=62
+2026-10-21 16:32:50,358 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=13 type=reply src=5 dest=0 ttl=63 bytes=10
+2026-10-21 16:32:50,358 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=1 delay_s=0.01 delayed_sends=33 id=13 type=reply src=5 dest=0 ttl=62
+2026-10-21 16:32:50,358 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=4 next_hop_real=127.0.0.1:60004 delay_s=0.03 id=18 type=echo src=0 dest=5 ttl=62
+2026-10-21 16:32:50,358 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=16 type=reply src=5 dest=0 ttl=64 bytes=10
+2026-10-21 16:32:50,359 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=2 delay_s=0.05 delayed_sends=35 id=16 type=reply src=5 dest=0 ttl=63
+2026-10-21 16:32:50,359 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=17 type=echo src=0 dest=5 ttl=62 bytes=10
+2026-10-21 16:32:50,358 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=19 type=echo src=0 dest=5 ttl=63 bytes=10
+2026-10-21 16:32:50,359 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=4 delay_s=0.03 delayed_sends=34 id=19 type=echo src=0 dest=5 ttl=62
+2026-10-21 16:32:50,359 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=5 delay_s=0.015 delayed_sends=36 id=17 type=echo src=0 dest=5 ttl=61
+2026-10-21 16:32:50,359 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=18 type=echo src=0 dest=5 ttl=62 bytes=10
+2026-10-21 16:32:50,359 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=5 delay_s=0.015 delayed_sends=37 id=18 type=echo src=0 dest=5 ttl=61
+2026-10-21 16:32:50,373 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=1 next_hop_real=127.0.0.1:60001 delay_s=0.01 id=13 type=reply src=5 dest=0 ttl=62
+2026-10-21 16:32:50,373 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.05 id=14 type=reply src=5 dest=0 ttl=63
+2026-10-21 16:32:50,374 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=13 type=reply src=5 dest=0 ttl=62 bytes=10
+2026-10-21 16:32:50,374 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.05 id=15 type=reply src=5 dest=0 ttl=63
+2026-10-21 16:32:50,374 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=0 delay_s=0.005 delayed_sends=34 id=13 type=reply src=5 dest=0 ttl=61
+2026-10-21 16:32:50,374 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=14 type=reply src=5 dest=0 ttl=63 bytes=10
+2026-10-21 16:32:50,375 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=5 next_hop_real=127.0.0.1:60005 delay_s=0.015 id=17 type=echo src=0 dest=5 ttl=61
+2026-10-21 16:32:50,375 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=1 delay_s=0.01 delayed_sends=35 id=14 type=reply src=5 dest=0 ttl=62
+2026-10-21 16:32:50,375 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=15 type=reply src=5 dest=0 ttl=63 bytes=10
+2026-10-21 16:32:50,375 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=1 delay_s=0.01 delayed_sends=36 id=15 type=reply src=5 dest=0 ttl=62
+2026-10-21 16:32:50,376 | run=d12fdb49 | INFO | netlog.host-5 | event=receive id=17 type=echo src=0 dest=5 ttl=61 type_flags_binary=00000001 bytes=10 payload=A-probe-17
+2026-10-21 16:32:50,376 | run=d12fdb49 | INFO | netlog.host-5 | event=send id=1 type=echo src=5 dest=0 next_hop=4 ttl=64
+2026-10-21 16:32:50,376 | run=d12fdb49 | INFO | netlog.host-5 | event=send id=17 type=reply src=5 dest=0 next_hop=4 ttl=64
+2026-10-21 16:32:50,376 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=5 next_hop_real=127.0.0.1:60005 delay_s=0.015 id=18 type=echo src=0 dest=5 ttl=61
+2026-10-21 16:32:50,377 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=17 type=reply src=5 dest=0 ttl=64 bytes=10
+2026-10-21 16:32:50,377 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=2 delay_s=0.05 delayed_sends=38 id=17 type=reply src=5 dest=0 ttl=63
+2026-10-21 16:32:50,377 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=1 type=echo src=5 dest=0 ttl=64 bytes=9
+2026-10-21 16:32:50,377 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=2 delay_s=0.05 delayed_sends=39 id=1 type=echo src=5 dest=0 ttl=63
+2026-10-21 16:32:50,377 | run=d12fdb49 | INFO | netlog.host-5 | event=receive id=18 type=echo src=0 dest=5 ttl=61 type_flags_binary=00000001 bytes=10 payload=A-probe-18
+2026-10-21 16:32:50,377 | run=d12fdb49 | INFO | netlog.host-5 | event=send id=18 type=reply src=5 dest=0 next_hop=4 ttl=64
+2026-10-21 16:32:50,378 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=18 type=reply src=5 dest=0 ttl=64 bytes=10
+2026-10-21 16:32:50,378 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=2 delay_s=0.05 delayed_sends=40 id=18 type=reply src=5 dest=0 ttl=63
+2026-10-21 16:32:50,389 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=1 next_hop_real=127.0.0.1:60001 delay_s=0.01 id=14 type=reply src=5 dest=0 ttl=62
+2026-10-21 16:32:50,389 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=0 next_hop_real=127.0.0.1:60000 delay_s=0.005 id=13 type=reply src=5 dest=0 ttl=61
+2026-10-21 16:32:50,389 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=1 next_hop_real=127.0.0.1:60001 delay_s=0.01 id=15 type=reply src=5 dest=0 ttl=62
+2026-10-21 16:32:50,389 | run=d12fdb49 | INFO | netlog.host-0 | event=receive id=13 type=reply src=5 dest=0 ttl=61 type_flags_binary=00000010 bytes=10 payload=A-probe-13
+2026-10-21 16:32:50,389 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=14 type=reply src=5 dest=0 ttl=62 bytes=10
+2026-10-21 16:32:50,389 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=4 next_hop_real=127.0.0.1:60004 delay_s=0.03 id=19 type=echo src=0 dest=5 ttl=62
+2026-10-21 16:32:50,389 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=0 delay_s=0.005 delayed_sends=35 id=14 type=reply src=5 dest=0 ttl=61
+2026-10-21 16:32:50,389 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=15 type=reply src=5 dest=0 ttl=62 bytes=10
+2026-10-21 16:32:50,389 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=0 delay_s=0.005 delayed_sends=36 id=15 type=reply src=5 dest=0 ttl=61
+2026-10-21 16:32:50,390 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=19 type=echo src=0 dest=5 ttl=62 bytes=10
+2026-10-21 16:32:50,390 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=5 delay_s=0.015 delayed_sends=41 id=19 type=echo src=0 dest=5 ttl=61
+2026-10-21 16:32:50,397 | run=d12fdb49 | INFO | netlog.host-5 | event=send id=2 type=echo src=5 dest=0 next_hop=4 ttl=64
+2026-10-21 16:32:50,397 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=2 type=echo src=5 dest=0 ttl=64 bytes=9
+2026-10-21 16:32:50,397 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=2 delay_s=0.05 delayed_sends=42 id=2 type=echo src=5 dest=0 ttl=63
+2026-10-21 16:32:50,404 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=0 next_hop_real=127.0.0.1:60000 delay_s=0.005 id=14 type=reply src=5 dest=0 ttl=61
+2026-10-21 16:32:50,404 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=0 next_hop_real=127.0.0.1:60000 delay_s=0.005 id=15 type=reply src=5 dest=0 ttl=61
+2026-10-21 16:32:50,404 | run=d12fdb49 | INFO | netlog.host-0 | event=receive id=14 type=reply src=5 dest=0 ttl=61 type_flags_binary=00000010 bytes=10 payload=A-probe-14
+2026-10-21 16:32:50,405 | run=d12fdb49 | INFO | netlog.host-0 | event=receive id=15 type=reply src=5 dest=0 ttl=61 type_flags_binary=00000010 bytes=10 payload=A-probe-15
+2026-10-21 16:32:50,417 | run=d12fdb49 | INFO | netlog.host-5 | event=send id=3 type=echo src=5 dest=0 next_hop=4 ttl=64
+2026-10-21 16:32:50,418 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=3 type=echo src=5 dest=0 ttl=64 bytes=9
+2026-10-21 16:32:50,418 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=2 delay_s=0.05 delayed_sends=43 id=3 type=echo src=5 dest=0 ttl=63
+2026-10-21 16:32:50,418 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=5 next_hop_real=127.0.0.1:60005 delay_s=0.015 id=19 type=echo src=0 dest=5 ttl=61
+2026-10-21 16:32:50,418 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.05 id=0 type=echo src=5 dest=0 ttl=63
+2026-10-21 16:32:50,419 | run=d12fdb49 | INFO | netlog.host-5 | event=receive id=19 type=echo src=0 dest=5 ttl=61 type_flags_binary=00000001 bytes=10 payload=A-probe-19
+2026-10-21 16:32:50,419 | run=d12fdb49 | INFO | netlog.host-5 | event=send id=19 type=reply src=5 dest=0 next_hop=4 ttl=64
+2026-10-21 16:32:50,419 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.05 id=16 type=reply src=5 dest=0 ttl=63
+2026-10-21 16:32:50,419 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=0 type=echo src=5 dest=0 ttl=63 bytes=9
+2026-10-21 16:32:50,419 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=19 type=reply src=5 dest=0 ttl=64 bytes=10
+2026-10-21 16:32:50,420 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=1 delay_s=0.01 delayed_sends=37 id=0 type=echo src=5 dest=0 ttl=62
+2026-10-21 16:32:50,420 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=2 delay_s=0.05 delayed_sends=44 id=19 type=reply src=5 dest=0 ttl=63
+2026-10-21 16:32:50,420 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=16 type=reply src=5 dest=0 ttl=63 bytes=10
+2026-10-21 16:32:50,420 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=1 delay_s=0.01 delayed_sends=38 id=16 type=reply src=5 dest=0 ttl=62
+2026-10-21 16:32:50,435 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=1 next_hop_real=127.0.0.1:60001 delay_s=0.01 id=0 type=echo src=5 dest=0 ttl=62
+2026-10-21 16:32:50,435 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.05 id=17 type=reply src=5 dest=0 ttl=63
+2026-10-21 16:32:50,435 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=1 next_hop_real=127.0.0.1:60001 delay_s=0.01 id=16 type=reply src=5 dest=0 ttl=62
+2026-10-21 16:32:50,435 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=0 type=echo src=5 dest=0 ttl=62 bytes=9
+2026-10-21 16:32:50,436 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.05 id=1 type=echo src=5 dest=0 ttl=63
+2026-10-21 16:32:50,436 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=17 type=reply src=5 dest=0 ttl=63 bytes=10
+2026-10-21 16:32:50,436 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=0 delay_s=0.005 delayed_sends=37 id=0 type=echo src=5 dest=0 ttl=61
+2026-10-21 16:32:50,436 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=16 type=reply src=5 dest=0 ttl=62 bytes=10
+2026-10-21 16:32:50,436 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=1 delay_s=0.01 delayed_sends=39 id=17 type=reply src=5 dest=0 ttl=62
+2026-10-21 16:32:50,436 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.05 id=18 type=reply src=5 dest=0 ttl=63
+2026-10-21 16:32:50,436 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=0 delay_s=0.005 delayed_sends=38 id=16 type=reply src=5 dest=0 ttl=61
+2026-10-21 16:32:50,436 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=1 type=echo src=5 dest=0 ttl=63 bytes=9
+2026-10-21 16:32:50,436 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=1 delay_s=0.01 delayed_sends=40 id=1 type=echo src=5 dest=0 ttl=62
+2026-10-21 16:32:50,436 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=18 type=reply src=5 dest=0 ttl=63 bytes=10
+2026-10-21 16:32:50,436 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=1 delay_s=0.01 delayed_sends=41 id=18 type=reply src=5 dest=0 ttl=62
+2026-10-21 16:32:50,438 | run=d12fdb49 | INFO | netlog.host-5 | event=send id=4 type=echo src=5 dest=0 next_hop=4 ttl=64
+2026-10-21 16:32:50,438 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=4 type=echo src=5 dest=0 ttl=64 bytes=9
+2026-10-21 16:32:50,438 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=2 delay_s=0.05 delayed_sends=45 id=4 type=echo src=5 dest=0 ttl=63
+2026-10-21 16:32:50,450 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=1 next_hop_real=127.0.0.1:60001 delay_s=0.01 id=17 type=reply src=5 dest=0 ttl=62
+2026-10-21 16:32:50,451 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=0 next_hop_real=127.0.0.1:60000 delay_s=0.005 id=0 type=echo src=5 dest=0 ttl=61
+2026-10-21 16:32:50,451 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=1 next_hop_real=127.0.0.1:60001 delay_s=0.01 id=1 type=echo src=5 dest=0 ttl=62
+2026-10-21 16:32:50,451 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.05 id=2 type=echo src=5 dest=0 ttl=63
+2026-10-21 16:32:50,451 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=1 next_hop_real=127.0.0.1:60001 delay_s=0.01 id=18 type=reply src=5 dest=0 ttl=62
+2026-10-21 16:32:50,451 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=0 next_hop_real=127.0.0.1:60000 delay_s=0.005 id=16 type=reply src=5 dest=0 ttl=61
+2026-10-21 16:32:50,451 | run=d12fdb49 | INFO | netlog.host-0 | event=receive id=0 type=echo src=5 dest=0 ttl=61 type_flags_binary=00000001 bytes=9 payload=B-probe-0
+2026-10-21 16:32:50,451 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=2 type=echo src=5 dest=0 ttl=63 bytes=9
+2026-10-21 16:32:50,452 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=1 delay_s=0.01 delayed_sends=42 id=2 type=echo src=5 dest=0 ttl=62
+2026-10-21 16:32:50,452 | run=d12fdb49 | INFO | netlog.host-0 | event=send id=0 type=reply src=0 dest=5 next_hop=1 ttl=64
+2026-10-21 16:32:50,452 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=17 type=reply src=5 dest=0 ttl=62 bytes=10
+2026-10-21 16:32:50,452 | run=d12fdb49 | INFO | netlog.host-0 | event=receive id=16 type=reply src=5 dest=0 ttl=61 type_flags_binary=00000010 bytes=10 payload=A-probe-16
+2026-10-21 16:32:50,452 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=0 delay_s=0.005 delayed_sends=39 id=17 type=reply src=5 dest=0 ttl=61
+2026-10-21 16:32:50,452 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=1 type=echo src=5 dest=0 ttl=62 bytes=9
+2026-10-21 16:32:50,452 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=0 delay_s=0.005 delayed_sends=40 id=1 type=echo src=5 dest=0 ttl=61
+2026-10-21 16:32:50,452 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=18 type=reply src=5 dest=0 ttl=62 bytes=10
+2026-10-21 16:32:50,453 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=0 delay_s=0.005 delayed_sends=41 id=18 type=reply src=5 dest=0 ttl=61
+2026-10-21 16:32:50,453 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=0 type=reply src=0 dest=5 ttl=64 bytes=9
+2026-10-21 16:32:50,453 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=2 delay_s=0.01 delayed_sends=42 id=0 type=reply src=0 dest=5 ttl=63
+2026-10-21 16:32:50,458 | run=d12fdb49 | INFO | netlog.host-5 | event=send id=5 type=echo src=5 dest=0 next_hop=4 ttl=64
+2026-10-21 16:32:50,459 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=5 type=echo src=5 dest=0 ttl=64 bytes=9
+2026-10-21 16:32:50,459 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=2 delay_s=0.05 delayed_sends=46 id=5 type=echo src=5 dest=0 ttl=63
+2026-10-21 16:32:50,466 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=1 next_hop_real=127.0.0.1:60001 delay_s=0.01 id=2 type=echo src=5 dest=0 ttl=62
+2026-10-21 16:32:50,466 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=0 next_hop_real=127.0.0.1:60000 delay_s=0.005 id=17 type=reply src=5 dest=0 ttl=61
+2026-10-21 16:32:50,466 | run=d12fdb49 | INFO | netlog.host-0 | event=receive id=17 type=reply src=5 dest=0 ttl=61 type_flags_binary=00000010 bytes=10 payload=A-probe-17
+2026-10-21 16:32:50,466 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=2 type=echo src=5 dest=0 ttl=62 bytes=9
+2026-10-21 16:32:50,467 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=0 delay_s=0.005 delayed_sends=43 id=2 type=echo src=5 dest=0 ttl=61
+2026-10-21 16:32:50,467 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=0 next_hop_real=127.0.0.1:60000 delay_s=0.005 id=1 type=echo src=5 dest=0 ttl=61
+2026-10-21 16:32:50,467 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=0 next_hop_real=127.0.0.1:60000 delay_s=0.005 id=18 type=reply src=5 dest=0 ttl=61
+2026-10-21 16:32:50,467 | run=d12fdb49 | INFO | netlog.host-0 | event=receive id=1 type=echo src=5 dest=0 ttl=61 type_flags_binary=00000001 bytes=9 payload=B-probe-1
+2026-10-21 16:32:50,467 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.01 id=0 type=reply src=0 dest=5 ttl=63
+2026-10-21 16:32:50,467 | run=d12fdb49 | INFO | netlog.host-0 | event=send id=1 type=reply src=0 dest=5 next_hop=1 ttl=64
+2026-10-21 16:32:50,467 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=0 type=reply src=0 dest=5 ttl=63 bytes=9
+2026-10-21 16:32:50,467 | run=d12fdb49 | INFO | netlog.host-0 | event=receive id=18 type=reply src=5 dest=0 ttl=61 type_flags_binary=00000010 bytes=10 payload=A-probe-18
+2026-10-21 16:32:50,467 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=4 delay_s=0.03 delayed_sends=43 id=0 type=reply src=0 dest=5 ttl=62
+2026-10-21 16:32:50,467 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=1 type=reply src=0 dest=5 ttl=64 bytes=9
+2026-10-21 16:32:50,467 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=2 delay_s=0.01 delayed_sends=44 id=1 type=reply src=0 dest=5 ttl=63
+2026-10-21 16:32:50,479 | run=d12fdb49 | INFO | netlog.host-5 | event=send id=6 type=echo src=5 dest=0 next_hop=4 ttl=64
+2026-10-21 16:32:50,480 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=6 type=echo src=5 dest=0 ttl=64 bytes=9
+2026-10-21 16:32:50,480 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=2 delay_s=0.05 delayed_sends=47 id=6 type=echo src=5 dest=0 ttl=63
+2026-10-21 16:32:50,480 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.05 id=3 type=echo src=5 dest=0 ttl=63
+2026-10-21 16:32:50,480 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.05 id=19 type=reply src=5 dest=0 ttl=63
+2026-10-21 16:32:50,480 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=3 type=echo src=5 dest=0 ttl=63 bytes=9
+2026-10-21 16:32:50,480 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=1 delay_s=0.01 delayed_sends=44 id=3 type=echo src=5 dest=0 ttl=62
+2026-10-21 16:32:50,480 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=19 type=reply src=5 dest=0 ttl=63 bytes=10
+2026-10-21 16:32:50,480 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=1 delay_s=0.01 delayed_sends=45 id=19 type=reply src=5 dest=0 ttl=62
+2026-10-21 16:32:50,481 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=0 next_hop_real=127.0.0.1:60000 delay_s=0.005 id=2 type=echo src=5 dest=0 ttl=61
+2026-10-21 16:32:50,481 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.01 id=1 type=reply src=0 dest=5 ttl=63
+2026-10-21 16:32:50,481 | run=d12fdb49 | INFO | netlog.host-0 | event=receive id=2 type=echo src=5 dest=0 ttl=61 type_flags_binary=00000001 bytes=9 payload=B-probe-2
+2026-10-21 16:32:50,482 | run=d12fdb49 | INFO | netlog.host-0 | event=send id=2 type=reply src=0 dest=5 next_hop=1 ttl=64
+2026-10-21 16:32:50,482 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=1 type=reply src=0 dest=5 ttl=63 bytes=9
+2026-10-21 16:32:50,482 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=2 type=reply src=0 dest=5 ttl=64 bytes=9
+2026-10-21 16:32:50,482 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=4 delay_s=0.03 delayed_sends=46 id=1 type=reply src=0 dest=5 ttl=62
+2026-10-21 16:32:50,482 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=2 delay_s=0.01 delayed_sends=45 id=2 type=reply src=0 dest=5 ttl=63
+2026-10-21 16:32:50,497 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.01 id=2 type=reply src=0 dest=5 ttl=63
+2026-10-21 16:32:50,497 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=1 next_hop_real=127.0.0.1:60001 delay_s=0.01 id=3 type=echo src=5 dest=0 ttl=62
+2026-10-21 16:32:50,497 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.05 id=4 type=echo src=5 dest=0 ttl=63
+2026-10-21 16:32:50,497 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=1 next_hop_real=127.0.0.1:60001 delay_s=0.01 id=19 type=reply src=5 dest=0 ttl=62
+2026-10-21 16:32:50,498 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=3 type=echo src=5 dest=0 ttl=62 bytes=9
+2026-10-21 16:32:50,498 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=2 type=reply src=0 dest=5 ttl=63 bytes=9
+2026-10-21 16:32:50,498 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=4 next_hop_real=127.0.0.1:60004 delay_s=0.03 id=0 type=reply src=0 dest=5 ttl=62
+2026-10-21 16:32:50,498 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=0 delay_s=0.005 delayed_sends=46 id=3 type=echo src=5 dest=0 ttl=61
+2026-10-21 16:32:50,498 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=4 delay_s=0.03 delayed_sends=47 id=2 type=reply src=0 dest=5 ttl=62
+2026-10-21 16:32:50,498 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=19 type=reply src=5 dest=0 ttl=62 bytes=10
+2026-10-21 16:32:50,498 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=0 type=reply src=0 dest=5 ttl=62 bytes=9
+2026-10-21 16:32:50,498 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=4 type=echo src=5 dest=0 ttl=63 bytes=9
+2026-10-21 16:32:50,499 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=0 delay_s=0.005 delayed_sends=47 id=19 type=reply src=5 dest=0 ttl=61
+2026-10-21 16:32:50,499 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=5 delay_s=0.015 delayed_sends=48 id=0 type=reply src=0 dest=5 ttl=61
+2026-10-21 16:32:50,499 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=1 delay_s=0.01 delayed_sends=48 id=4 type=echo src=5 dest=0 ttl=62
+2026-10-21 16:32:50,500 | run=d12fdb49 | INFO | netlog.host-5 | event=send id=7 type=echo src=5 dest=0 next_hop=4 ttl=64
+2026-10-21 16:32:50,500 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=7 type=echo src=5 dest=0 ttl=64 bytes=9
+2026-10-21 16:32:50,500 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=2 delay_s=0.05 delayed_sends=49 id=7 type=echo src=5 dest=0 ttl=63
+2026-10-21 16:32:50,512 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=0 next_hop_real=127.0.0.1:60000 delay_s=0.005 id=3 type=echo src=5 dest=0 ttl=61
+2026-10-21 16:32:50,512 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=1 next_hop_real=127.0.0.1:60001 delay_s=0.01 id=4 type=echo src=5 dest=0 ttl=62
+2026-10-21 16:32:50,512 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.05 id=5 type=echo src=5 dest=0 ttl=63
+2026-10-21 16:32:50,512 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=0 next_hop_real=127.0.0.1:60000 delay_s=0.005 id=19 type=reply src=5 dest=0 ttl=61
+2026-10-21 16:32:50,512 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=4 next_hop_real=127.0.0.1:60004 delay_s=0.03 id=1 type=reply src=0 dest=5 ttl=62
+2026-10-21 16:32:50,512 | run=d12fdb49 | INFO | netlog.host-0 | event=receive id=3 type=echo src=5 dest=0 ttl=61 type_flags_binary=00000001 bytes=9 payload=B-probe-3
+2026-10-21 16:32:50,512 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=4 type=echo src=5 dest=0 ttl=62 bytes=9
+2026-10-21 16:32:50,512 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=5 type=echo src=5 dest=0 ttl=63 bytes=9
+2026-10-21 16:32:50,513 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=1 type=reply src=0 dest=5 ttl=62 bytes=9
+2026-10-21 16:32:50,513 | run=d12fdb49 | INFO | netlog.host-0 | event=send id=3 type=reply src=0 dest=5 next_hop=1 ttl=64
+2026-10-21 16:32:50,513 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=0 delay_s=0.005 delayed_sends=48 id=4 type=echo src=5 dest=0 ttl=61
+2026-10-21 16:32:50,513 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=1 delay_s=0.01 delayed_sends=49 id=5 type=echo src=5 dest=0 ttl=62
+2026-10-21 16:32:50,513 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=5 delay_s=0.015 delayed_sends=50 id=1 type=reply src=0 dest=5 ttl=61
+2026-10-21 16:32:50,513 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=3 type=reply src=0 dest=5 ttl=64 bytes=9
+2026-10-21 16:32:50,513 | run=d12fdb49 | INFO | netlog.host-0 | event=receive id=19 type=reply src=5 dest=0 ttl=61 type_flags_binary=00000010 bytes=10 payload=A-probe-19
+2026-10-21 16:32:50,513 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=2 delay_s=0.01 delayed_sends=49 id=3 type=reply src=0 dest=5 ttl=63
+2026-10-21 16:32:50,521 | run=d12fdb49 | INFO | netlog.host-5 | event=send id=8 type=echo src=5 dest=0 next_hop=4 ttl=64
+2026-10-21 16:32:50,521 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=8 type=echo src=5 dest=0 ttl=64 bytes=9
+2026-10-21 16:32:50,521 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=2 delay_s=0.05 delayed_sends=51 id=8 type=echo src=5 dest=0 ttl=63
+2026-10-21 16:32:50,521 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=5 next_hop_real=127.0.0.1:60005 delay_s=0.015 id=0 type=reply src=0 dest=5 ttl=61
+2026-10-21 16:32:50,521 | run=d12fdb49 | INFO | netlog.host-5 | event=receive id=0 type=reply src=0 dest=5 ttl=61 type_flags_binary=00000010 bytes=9 payload=B-probe-0
+2026-10-21 16:32:50,528 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=1 next_hop_real=127.0.0.1:60001 delay_s=0.01 id=5 type=echo src=5 dest=0 ttl=62
+2026-10-21 16:32:50,528 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=0 next_hop_real=127.0.0.1:60000 delay_s=0.005 id=4 type=echo src=5 dest=0 ttl=61
+2026-10-21 16:32:50,528 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=5 type=echo src=5 dest=0 ttl=62 bytes=9
+2026-10-21 16:32:50,528 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.01 id=3 type=reply src=0 dest=5 ttl=63
+2026-10-21 16:32:50,528 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=0 delay_s=0.005 delayed_sends=50 id=5 type=echo src=5 dest=0 ttl=61
+2026-10-21 16:32:50,528 | run=d12fdb49 | INFO | netlog.host-0 | event=receive id=4 type=echo src=5 dest=0 ttl=61 type_flags_binary=00000001 bytes=9 payload=B-probe-4
+2026-10-21 16:32:50,529 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=3 type=reply src=0 dest=5 ttl=63 bytes=9
+2026-10-21 16:32:50,529 | run=d12fdb49 | INFO | netlog.host-0 | event=send id=4 type=reply src=0 dest=5 next_hop=1 ttl=64
+2026-10-21 16:32:50,529 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=4 delay_s=0.03 delayed_sends=50 id=3 type=reply src=0 dest=5 ttl=62
+2026-10-21 16:32:50,529 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=4 type=reply src=0 dest=5 ttl=64 bytes=9
+2026-10-21 16:32:50,529 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=2 delay_s=0.01 delayed_sends=51 id=4 type=reply src=0 dest=5 ttl=63
+2026-10-21 16:32:50,529 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=4 next_hop_real=127.0.0.1:60004 delay_s=0.03 id=2 type=reply src=0 dest=5 ttl=62
+2026-10-21 16:32:50,529 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=2 type=reply src=0 dest=5 ttl=62 bytes=9
+2026-10-21 16:32:50,529 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=5 delay_s=0.015 delayed_sends=52 id=2 type=reply src=0 dest=5 ttl=61
+2026-10-21 16:32:50,529 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=5 next_hop_real=127.0.0.1:60005 delay_s=0.015 id=1 type=reply src=0 dest=5 ttl=61
+2026-10-21 16:32:50,529 | run=d12fdb49 | INFO | netlog.host-5 | event=receive id=1 type=reply src=0 dest=5 ttl=61 type_flags_binary=00000010 bytes=9 payload=B-probe-1
+2026-10-21 16:32:50,541 | run=d12fdb49 | INFO | netlog.host-5 | event=send id=9 type=echo src=5 dest=0 next_hop=4 ttl=64
+2026-10-21 16:32:50,542 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=9 type=echo src=5 dest=0 ttl=64 bytes=9
+2026-10-21 16:32:50,542 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=2 delay_s=0.05 delayed_sends=53 id=9 type=echo src=5 dest=0 ttl=63
+2026-10-21 16:32:50,542 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.05 id=6 type=echo src=5 dest=0 ttl=63
+2026-10-21 16:32:50,542 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=0 next_hop_real=127.0.0.1:60000 delay_s=0.005 id=5 type=echo src=5 dest=0 ttl=61
+2026-10-21 16:32:50,543 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=6 type=echo src=5 dest=0 ttl=63 bytes=9
+2026-10-21 16:32:50,543 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=1 delay_s=0.01 delayed_sends=51 id=6 type=echo src=5 dest=0 ttl=62
+2026-10-21 16:32:50,543 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.01 id=4 type=reply src=0 dest=5 ttl=63
+2026-10-21 16:32:50,543 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=4 type=reply src=0 dest=5 ttl=63 bytes=9
+2026-10-21 16:32:50,544 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=4 delay_s=0.03 delayed_sends=52 id=4 type=reply src=0 dest=5 ttl=62
+2026-10-21 16:32:50,544 | run=d12fdb49 | INFO | netlog.host-0 | event=receive id=5 type=echo src=5 dest=0 ttl=61 type_flags_binary=00000001 bytes=9 payload=B-probe-5
+2026-10-21 16:32:50,544 | run=d12fdb49 | INFO | netlog.host-0 | event=send id=5 type=reply src=0 dest=5 next_hop=1 ttl=64
+2026-10-21 16:32:50,544 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=5 type=reply src=0 dest=5 ttl=64 bytes=9
+2026-10-21 16:32:50,546 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=2 delay_s=0.01 delayed_sends=52 id=5 type=reply src=0 dest=5 ttl=63
+2026-10-21 16:32:50,558 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=5 next_hop_real=127.0.0.1:60005 delay_s=0.015 id=2 type=reply src=0 dest=5 ttl=61
+2026-10-21 16:32:50,558 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=1 next_hop_real=127.0.0.1:60001 delay_s=0.01 id=6 type=echo src=5 dest=0 ttl=62
+2026-10-21 16:32:50,558 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.01 id=5 type=reply src=0 dest=5 ttl=63
+2026-10-21 16:32:50,559 | run=d12fdb49 | INFO | netlog.host-5 | event=receive id=2 type=reply src=0 dest=5 ttl=61 type_flags_binary=00000010 bytes=9 payload=B-probe-2
+2026-10-21 16:32:50,559 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.05 id=7 type=echo src=5 dest=0 ttl=63
+2026-10-21 16:32:50,559 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=6 type=echo src=5 dest=0 ttl=62 bytes=9
+2026-10-21 16:32:50,560 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=5 type=reply src=0 dest=5 ttl=63 bytes=9
+2026-10-21 16:32:50,560 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=4 next_hop_real=127.0.0.1:60004 delay_s=0.03 id=3 type=reply src=0 dest=5 ttl=62
+2026-10-21 16:32:50,560 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=0 delay_s=0.005 delayed_sends=53 id=6 type=echo src=5 dest=0 ttl=61
+2026-10-21 16:32:50,560 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=4 delay_s=0.03 delayed_sends=53 id=5 type=reply src=0 dest=5 ttl=62
+2026-10-21 16:32:50,560 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=7 type=echo src=5 dest=0 ttl=63 bytes=9
+2026-10-21 16:32:50,560 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=1 delay_s=0.01 delayed_sends=54 id=7 type=echo src=5 dest=0 ttl=62
+2026-10-21 16:32:50,561 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=3 type=reply src=0 dest=5 ttl=62 bytes=9
+2026-10-21 16:32:50,561 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=5 delay_s=0.015 delayed_sends=54 id=3 type=reply src=0 dest=5 ttl=61
+2026-10-21 16:32:50,562 | run=d12fdb49 | INFO | netlog.host-5 | event=send id=10 type=echo src=5 dest=0 next_hop=4 ttl=64
+2026-10-21 16:32:50,562 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=10 type=echo src=5 dest=0 ttl=64 bytes=10
+2026-10-21 16:32:50,562 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=2 delay_s=0.05 delayed_sends=55 id=10 type=echo src=5 dest=0 ttl=63
+2026-10-21 16:32:50,574 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=0 next_hop_real=127.0.0.1:60000 delay_s=0.005 id=6 type=echo src=5 dest=0 ttl=61
+2026-10-21 16:32:50,574 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=1 next_hop_real=127.0.0.1:60001 delay_s=0.01 id=7 type=echo src=5 dest=0 ttl=62
+2026-10-21 16:32:50,574 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.05 id=8 type=echo src=5 dest=0 ttl=63
+2026-10-21 16:32:50,574 | run=d12fdb49 | INFO | netlog.host-0 | event=receive id=6 type=echo src=5 dest=0 ttl=61 type_flags_binary=00000001 bytes=9 payload=B-probe-6
+2026-10-21 16:32:50,575 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=4 next_hop_real=127.0.0.1:60004 delay_s=0.03 id=4 type=reply src=0 dest=5 ttl=62
+2026-10-21 16:32:50,575 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=7 type=echo src=5 dest=0 ttl=62 bytes=9
+2026-10-21 16:32:50,575 | run=d12fdb49 | INFO | netlog.host-0 | event=send id=6 type=reply src=0 dest=5 next_hop=1 ttl=64
+2026-10-21 16:32:50,575 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=8 type=echo src=5 dest=0 ttl=63 bytes=9
+2026-10-21 16:32:50,575 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=0 delay_s=0.005 delayed_sends=54 id=7 type=echo src=5 dest=0 ttl=61
+2026-10-21 16:32:50,576 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=4 type=reply src=0 dest=5 ttl=62 bytes=9
+2026-10-21 16:32:50,576 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=1 delay_s=0.01 delayed_sends=55 id=8 type=echo src=5 dest=0 ttl=62
+2026-10-21 16:32:50,576 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=6 type=reply src=0 dest=5 ttl=64 bytes=9
+2026-10-21 16:32:50,576 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=5 delay_s=0.015 delayed_sends=56 id=4 type=reply src=0 dest=5 ttl=61
+2026-10-21 16:32:50,576 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=2 delay_s=0.01 delayed_sends=55 id=6 type=reply src=0 dest=5 ttl=63
+2026-10-21 16:32:50,576 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=5 next_hop_real=127.0.0.1:60005 delay_s=0.015 id=3 type=reply src=0 dest=5 ttl=61
+2026-10-21 16:32:50,577 | run=d12fdb49 | INFO | netlog.host-5 | event=receive id=3 type=reply src=0 dest=5 ttl=61 type_flags_binary=00000010 bytes=9 payload=B-probe-3
+2026-10-21 16:32:50,582 | run=d12fdb49 | INFO | netlog.host-5 | event=send id=11 type=echo src=5 dest=0 next_hop=4 ttl=64
+2026-10-21 16:32:50,582 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=11 type=echo src=5 dest=0 ttl=64 bytes=10
+2026-10-21 16:32:50,582 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=2 delay_s=0.05 delayed_sends=57 id=11 type=echo src=5 dest=0 ttl=63
+2026-10-21 16:32:50,589 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=0 next_hop_real=127.0.0.1:60000 delay_s=0.005 id=7 type=echo src=5 dest=0 ttl=61
+2026-10-21 16:32:50,589 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=1 next_hop_real=127.0.0.1:60001 delay_s=0.01 id=8 type=echo src=5 dest=0 ttl=62
+2026-10-21 16:32:50,590 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.01 id=6 type=reply src=0 dest=5 ttl=63
+2026-10-21 16:32:50,590 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=6 type=reply src=0 dest=5 ttl=63 bytes=9
+2026-10-21 16:32:50,591 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=8 type=echo src=5 dest=0 ttl=62 bytes=9
+2026-10-21 16:32:50,591 | run=d12fdb49 | INFO | netlog.host-0 | event=receive id=7 type=echo src=5 dest=0 ttl=61 type_flags_binary=00000001 bytes=9 payload=B-probe-7
+2026-10-21 16:32:50,591 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=4 delay_s=0.03 delayed_sends=56 id=6 type=reply src=0 dest=5 ttl=62
+2026-10-21 16:32:50,591 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=0 delay_s=0.005 delayed_sends=56 id=8 type=echo src=5 dest=0 ttl=61
+2026-10-21 16:32:50,592 | run=d12fdb49 | INFO | netlog.host-0 | event=send id=7 type=reply src=0 dest=5 next_hop=1 ttl=64
+2026-10-21 16:32:50,592 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=4 next_hop_real=127.0.0.1:60004 delay_s=0.03 id=5 type=reply src=0 dest=5 ttl=62
+2026-10-21 16:32:50,593 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=7 type=reply src=0 dest=5 ttl=64 bytes=9
+2026-10-21 16:32:50,593 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=2 delay_s=0.01 delayed_sends=57 id=7 type=reply src=0 dest=5 ttl=63
+2026-10-21 16:32:50,593 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=5 type=reply src=0 dest=5 ttl=62 bytes=9
+2026-10-21 16:32:50,593 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=5 delay_s=0.015 delayed_sends=58 id=5 type=reply src=0 dest=5 ttl=61
+2026-10-21 16:32:50,593 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=5 next_hop_real=127.0.0.1:60005 delay_s=0.015 id=4 type=reply src=0 dest=5 ttl=61
+2026-10-21 16:32:50,593 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.05 id=9 type=echo src=5 dest=0 ttl=63
+2026-10-21 16:32:50,593 | run=d12fdb49 | INFO | netlog.host-5 | event=receive id=4 type=reply src=0 dest=5 ttl=61 type_flags_binary=00000010 bytes=9 payload=B-probe-4
+2026-10-21 16:32:50,594 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=9 type=echo src=5 dest=0 ttl=63 bytes=9
+2026-10-21 16:32:50,594 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=1 delay_s=0.01 delayed_sends=57 id=9 type=echo src=5 dest=0 ttl=62
+2026-10-21 16:32:50,603 | run=d12fdb49 | INFO | netlog.host-5 | event=send id=12 type=echo src=5 dest=0 next_hop=4 ttl=64
+2026-10-21 16:32:50,603 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=12 type=echo src=5 dest=0 ttl=64 bytes=10
+2026-10-21 16:32:50,603 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=2 delay_s=0.05 delayed_sends=59 id=12 type=echo src=5 dest=0 ttl=63
+2026-10-21 16:32:50,605 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=1 next_hop_real=127.0.0.1:60001 delay_s=0.01 id=9 type=echo src=5 dest=0 ttl=62
+2026-10-21 16:32:50,605 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=0 next_hop_real=127.0.0.1:60000 delay_s=0.005 id=8 type=echo src=5 dest=0 ttl=61
+2026-10-21 16:32:50,605 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=9 type=echo src=5 dest=0 ttl=62 bytes=9
+2026-10-21 16:32:50,606 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=0 delay_s=0.005 delayed_sends=58 id=9 type=echo src=5 dest=0 ttl=61
+2026-10-21 16:32:50,606 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.01 id=7 type=reply src=0 dest=5 ttl=63
+2026-10-21 16:32:50,606 | run=d12fdb49 | INFO | netlog.host-0 | event=receive id=8 type=echo src=5 dest=0 ttl=61 type_flags_binary=00000001 bytes=9 payload=B-probe-8
+2026-10-21 16:32:50,606 | run=d12fdb49 | INFO | netlog.host-0 | event=send id=8 type=reply src=0 dest=5 next_hop=1 ttl=64
+2026-10-21 16:32:50,606 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=7 type=reply src=0 dest=5 ttl=63 bytes=9
+2026-10-21 16:32:50,606 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=4 delay_s=0.03 delayed_sends=58 id=7 type=reply src=0 dest=5 ttl=62
+2026-10-21 16:32:50,607 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=8 type=reply src=0 dest=5 ttl=64 bytes=9
+2026-10-21 16:32:50,607 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=2 delay_s=0.01 delayed_sends=59 id=8 type=reply src=0 dest=5 ttl=63
+2026-10-21 16:32:50,621 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=0 next_hop_real=127.0.0.1:60000 delay_s=0.005 id=9 type=echo src=5 dest=0 ttl=61
+2026-10-21 16:32:50,621 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=5 next_hop_real=127.0.0.1:60005 delay_s=0.015 id=5 type=reply src=0 dest=5 ttl=61
+2026-10-21 16:32:50,622 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.01 id=8 type=reply src=0 dest=5 ttl=63
+2026-10-21 16:32:50,622 | run=d12fdb49 | INFO | netlog.host-0 | event=receive id=9 type=echo src=5 dest=0 ttl=61 type_flags_binary=00000001 bytes=9 payload=B-probe-9
+2026-10-21 16:32:50,623 | run=d12fdb49 | INFO | netlog.host-0 | event=send id=9 type=reply src=0 dest=5 next_hop=1 ttl=64
+2026-10-21 16:32:50,622 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.05 id=10 type=echo src=5 dest=0 ttl=63
+2026-10-21 16:32:50,623 | run=d12fdb49 | INFO | netlog.host-5 | event=receive id=5 type=reply src=0 dest=5 ttl=61 type_flags_binary=00000010 bytes=9 payload=B-probe-5
+2026-10-21 16:32:50,623 | run=d12fdb49 | INFO | netlog.host-5 | event=send id=13 type=echo src=5 dest=0 next_hop=4 ttl=64
+2026-10-21 16:32:50,623 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=8 type=reply src=0 dest=5 ttl=63 bytes=9
+2026-10-21 16:32:50,624 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=4 delay_s=0.03 delayed_sends=59 id=8 type=reply src=0 dest=5 ttl=62
+2026-10-21 16:32:50,624 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=9 type=reply src=0 dest=5 ttl=64 bytes=9
+2026-10-21 16:32:50,624 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=10 type=echo src=5 dest=0 ttl=63 bytes=10
+2026-10-21 16:32:50,624 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=4 next_hop_real=127.0.0.1:60004 delay_s=0.03 id=6 type=reply src=0 dest=5 ttl=62
+2026-10-21 16:32:50,624 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=13 type=echo src=5 dest=0 ttl=64 bytes=10
+2026-10-21 16:32:50,625 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=2 delay_s=0.01 delayed_sends=60 id=9 type=reply src=0 dest=5 ttl=63
+2026-10-21 16:32:50,625 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=1 delay_s=0.01 delayed_sends=60 id=10 type=echo src=5 dest=0 ttl=62
+2026-10-21 16:32:50,625 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=2 delay_s=0.05 delayed_sends=60 id=13 type=echo src=5 dest=0 ttl=63
+2026-10-21 16:32:50,626 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=6 type=reply src=0 dest=5 ttl=62 bytes=9
+2026-10-21 16:32:50,626 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=5 delay_s=0.015 delayed_sends=61 id=6 type=reply src=0 dest=5 ttl=61
+2026-10-21 16:32:50,636 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.01 id=9 type=reply src=0 dest=5 ttl=63
+2026-10-21 16:32:50,637 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.05 id=11 type=echo src=5 dest=0 ttl=63
+2026-10-21 16:32:50,637 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=1 next_hop_real=127.0.0.1:60001 delay_s=0.01 id=10 type=echo src=5 dest=0 ttl=62
+2026-10-21 16:32:50,638 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=4 next_hop_real=127.0.0.1:60004 delay_s=0.03 id=7 type=reply src=0 dest=5 ttl=62
+2026-10-21 16:32:50,638 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=9 type=reply src=0 dest=5 ttl=63 bytes=9
+2026-10-21 16:32:50,638 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=10 type=echo src=5 dest=0 ttl=62 bytes=10
+2026-10-21 16:32:50,638 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=4 delay_s=0.03 delayed_sends=61 id=9 type=reply src=0 dest=5 ttl=62
+2026-10-21 16:32:50,638 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=0 delay_s=0.005 delayed_sends=61 id=10 type=echo src=5 dest=0 ttl=61
+2026-10-21 16:32:50,638 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=7 type=reply src=0 dest=5 ttl=62 bytes=9
+2026-10-21 16:32:50,639 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=11 type=echo src=5 dest=0 ttl=63 bytes=10
+2026-10-21 16:32:50,639 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=5 delay_s=0.015 delayed_sends=62 id=7 type=reply src=0 dest=5 ttl=61
+2026-10-21 16:32:50,639 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=1 delay_s=0.01 delayed_sends=62 id=11 type=echo src=5 dest=0 ttl=62
+2026-10-21 16:32:50,644 | run=d12fdb49 | INFO | netlog.host-5 | event=send id=14 type=echo src=5 dest=0 next_hop=4 ttl=64
+2026-10-21 16:32:50,645 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=14 type=echo src=5 dest=0 ttl=64 bytes=10
+2026-10-21 16:32:50,645 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=2 delay_s=0.05 delayed_sends=63 id=14 type=echo src=5 dest=0 ttl=63
+2026-10-21 16:32:50,645 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=5 next_hop_real=127.0.0.1:60005 delay_s=0.015 id=6 type=reply src=0 dest=5 ttl=61
+2026-10-21 16:32:50,645 | run=d12fdb49 | INFO | netlog.host-5 | event=receive id=6 type=reply src=0 dest=5 ttl=61 type_flags_binary=00000010 bytes=9 payload=B-probe-6
+2026-10-21 16:32:50,652 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=1 next_hop_real=127.0.0.1:60001 delay_s=0.01 id=11 type=echo src=5 dest=0 ttl=62
+2026-10-21 16:32:50,652 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=0 next_hop_real=127.0.0.1:60000 delay_s=0.005 id=10 type=echo src=5 dest=0 ttl=61
+2026-10-21 16:32:50,652 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=11 type=echo src=5 dest=0 ttl=62 bytes=10
+2026-10-21 16:32:50,652 | run=d12fdb49 | INFO | netlog.host-0 | event=receive id=10 type=echo src=5 dest=0 ttl=61 type_flags_binary=00000001 bytes=10 payload=B-probe-10
+2026-10-21 16:32:50,653 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=0 delay_s=0.005 delayed_sends=62 id=11 type=echo src=5 dest=0 ttl=61
+2026-10-21 16:32:50,653 | run=d12fdb49 | INFO | netlog.host-0 | event=send id=10 type=reply src=0 dest=5 next_hop=1 ttl=64
+2026-10-21 16:32:50,653 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=10 type=reply src=0 dest=5 ttl=64 bytes=10
+2026-10-21 16:32:50,653 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=2 delay_s=0.01 delayed_sends=63 id=10 type=reply src=0 dest=5 ttl=63
+2026-10-21 16:32:50,665 | run=d12fdb49 | INFO | netlog.host-5 | event=send id=15 type=echo src=5 dest=0 next_hop=4 ttl=64
+2026-10-21 16:32:50,665 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=15 type=echo src=5 dest=0 ttl=64 bytes=10
+2026-10-21 16:32:50,665 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=2 delay_s=0.05 delayed_sends=64 id=15 type=echo src=5 dest=0 ttl=63
+2026-10-21 16:32:50,665 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.05 id=12 type=echo src=5 dest=0 ttl=63
+2026-10-21 16:32:50,666 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=5 next_hop_real=127.0.0.1:60005 delay_s=0.015 id=7 type=reply src=0 dest=5 ttl=61
+2026-10-21 16:32:50,666 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=12 type=echo src=5 dest=0 ttl=63 bytes=10
+2026-10-21 16:32:50,666 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=1 delay_s=0.01 delayed_sends=63 id=12 type=echo src=5 dest=0 ttl=62
+2026-10-21 16:32:50,666 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=4 next_hop_real=127.0.0.1:60004 delay_s=0.03 id=8 type=reply src=0 dest=5 ttl=62
+2026-10-21 16:32:50,666 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=8 type=reply src=0 dest=5 ttl=62 bytes=9
+2026-10-21 16:32:50,666 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=5 delay_s=0.015 delayed_sends=65 id=8 type=reply src=0 dest=5 ttl=61
+2026-10-21 16:32:50,666 | run=d12fdb49 | INFO | netlog.host-5 | event=receive id=7 type=reply src=0 dest=5 ttl=61 type_flags_binary=00000010 bytes=9 payload=B-probe-7
+2026-10-21 16:32:50,667 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=0 next_hop_real=127.0.0.1:60000 delay_s=0.005 id=11 type=echo src=5 dest=0 ttl=61
+2026-10-21 16:32:50,667 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.01 id=10 type=reply src=0 dest=5 ttl=63
+2026-10-21 16:32:50,667 | run=d12fdb49 | INFO | netlog.host-0 | event=receive id=11 type=echo src=5 dest=0 ttl=61 type_flags_binary=00000001 bytes=10 payload=B-probe-11
+2026-10-21 16:32:50,667 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=10 type=reply src=0 dest=5 ttl=63 bytes=10
+2026-10-21 16:32:50,668 | run=d12fdb49 | INFO | netlog.host-0 | event=send id=11 type=reply src=0 dest=5 next_hop=1 ttl=64
+2026-10-21 16:32:50,668 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=4 delay_s=0.03 delayed_sends=64 id=10 type=reply src=0 dest=5 ttl=62
+2026-10-21 16:32:50,668 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=11 type=reply src=0 dest=5 ttl=64 bytes=10
+2026-10-21 16:32:50,668 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=2 delay_s=0.01 delayed_sends=64 id=11 type=reply src=0 dest=5 ttl=63
+2026-10-21 16:32:50,683 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=4 next_hop_real=127.0.0.1:60004 delay_s=0.03 id=9 type=reply src=0 dest=5 ttl=62
+2026-10-21 16:32:50,683 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.05 id=13 type=echo src=5 dest=0 ttl=63
+2026-10-21 16:32:50,683 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.01 id=11 type=reply src=0 dest=5 ttl=63
+2026-10-21 16:32:50,683 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=1 next_hop_real=127.0.0.1:60001 delay_s=0.01 id=12 type=echo src=5 dest=0 ttl=62
+2026-10-21 16:32:50,684 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=5 next_hop_real=127.0.0.1:60005 delay_s=0.015 id=8 type=reply src=0 dest=5 ttl=61
+2026-10-21 16:32:50,684 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=13 type=echo src=5 dest=0 ttl=63 bytes=10
+2026-10-21 16:32:50,684 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=9 type=reply src=0 dest=5 ttl=62 bytes=9
+2026-10-21 16:32:50,685 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=1 delay_s=0.01 delayed_sends=65 id=13 type=echo src=5 dest=0 ttl=62
+2026-10-21 16:32:50,685 | run=d12fdb49 | INFO | netlog.host-5 | event=receive id=8 type=reply src=0 dest=5 ttl=61 type_flags_binary=00000010 bytes=9 payload=B-probe-8
+2026-10-21 16:32:50,685 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=5 delay_s=0.015 delayed_sends=66 id=9 type=reply src=0 dest=5 ttl=61
+2026-10-21 16:32:50,685 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=12 type=echo src=5 dest=0 ttl=62 bytes=10
+2026-10-21 16:32:50,685 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=0 delay_s=0.005 delayed_sends=65 id=12 type=echo src=5 dest=0 ttl=61
+2026-10-21 16:32:50,685 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=11 type=reply src=0 dest=5 ttl=63 bytes=10
+2026-10-21 16:32:50,686 | run=d12fdb49 | INFO | netlog.host-5 | event=send id=16 type=echo src=5 dest=0 next_hop=4 ttl=64
+2026-10-21 16:32:50,686 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=4 delay_s=0.03 delayed_sends=66 id=11 type=reply src=0 dest=5 ttl=62
+2026-10-21 16:32:50,686 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=16 type=echo src=5 dest=0 ttl=64 bytes=10
+2026-10-21 16:32:50,686 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=2 delay_s=0.05 delayed_sends=67 id=16 type=echo src=5 dest=0 ttl=63
+2026-10-21 16:32:50,698 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=0 next_hop_real=127.0.0.1:60000 delay_s=0.005 id=12 type=echo src=5 dest=0 ttl=61
+2026-10-21 16:32:50,698 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.05 id=14 type=echo src=5 dest=0 ttl=63
+2026-10-21 16:32:50,698 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=1 next_hop_real=127.0.0.1:60001 delay_s=0.01 id=13 type=echo src=5 dest=0 ttl=62
+2026-10-21 16:32:50,698 | run=d12fdb49 | INFO | netlog.host-0 | event=receive id=12 type=echo src=5 dest=0 ttl=61 type_flags_binary=00000001 bytes=10 payload=B-probe-12
+2026-10-21 16:32:50,699 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=4 next_hop_real=127.0.0.1:60004 delay_s=0.03 id=10 type=reply src=0 dest=5 ttl=62
+2026-10-21 16:32:50,699 | run=d12fdb49 | INFO | netlog.host-0 | event=send id=12 type=reply src=0 dest=5 next_hop=1 ttl=64
+2026-10-21 16:32:50,699 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=13 type=echo src=5 dest=0 ttl=62 bytes=10
+2026-10-21 16:32:50,699 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=14 type=echo src=5 dest=0 ttl=63 bytes=10
+2026-10-21 16:32:50,699 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=10 type=reply src=0 dest=5 ttl=62 bytes=10
+2026-10-21 16:32:50,699 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=0 delay_s=0.005 delayed_sends=66 id=13 type=echo src=5 dest=0 ttl=61
+2026-10-21 16:32:50,700 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=1 delay_s=0.01 delayed_sends=67 id=14 type=echo src=5 dest=0 ttl=62
+2026-10-21 16:32:50,700 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=5 delay_s=0.015 delayed_sends=68 id=10 type=reply src=0 dest=5 ttl=61
+2026-10-21 16:32:50,700 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=12 type=reply src=0 dest=5 ttl=64 bytes=10
+2026-10-21 16:32:50,700 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=2 delay_s=0.01 delayed_sends=67 id=12 type=reply src=0 dest=5 ttl=63
+2026-10-21 16:32:50,700 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=5 next_hop_real=127.0.0.1:60005 delay_s=0.015 id=9 type=reply src=0 dest=5 ttl=61
+2026-10-21 16:32:50,700 | run=d12fdb49 | INFO | netlog.host-5 | event=receive id=9 type=reply src=0 dest=5 ttl=61 type_flags_binary=00000010 bytes=9 payload=B-probe-9
+2026-10-21 16:32:50,707 | run=d12fdb49 | INFO | netlog.host-5 | event=send id=17 type=echo src=5 dest=0 next_hop=4 ttl=64
+2026-10-21 16:32:50,707 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=17 type=echo src=5 dest=0 ttl=64 bytes=10
+2026-10-21 16:32:50,707 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=2 delay_s=0.05 delayed_sends=69 id=17 type=echo src=5 dest=0 ttl=63
+2026-10-21 16:32:50,714 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=1 next_hop_real=127.0.0.1:60001 delay_s=0.01 id=14 type=echo src=5 dest=0 ttl=62
+2026-10-21 16:32:50,714 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=0 next_hop_real=127.0.0.1:60000 delay_s=0.005 id=13 type=echo src=5 dest=0 ttl=61
+2026-10-21 16:32:50,714 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.01 id=12 type=reply src=0 dest=5 ttl=63
+2026-10-21 16:32:50,714 | run=d12fdb49 | INFO | netlog.host-0 | event=receive id=13 type=echo src=5 dest=0 ttl=61 type_flags_binary=00000001 bytes=10 payload=B-probe-13
+2026-10-21 16:32:50,714 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=14 type=echo src=5 dest=0 ttl=62 bytes=10
+2026-10-21 16:32:50,715 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=12 type=reply src=0 dest=5 ttl=63 bytes=10
+2026-10-21 16:32:50,715 | run=d12fdb49 | INFO | netlog.host-0 | event=send id=13 type=reply src=0 dest=5 next_hop=1 ttl=64
+2026-10-21 16:32:50,715 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=0 delay_s=0.005 delayed_sends=68 id=14 type=echo src=5 dest=0 ttl=61
+2026-10-21 16:32:50,715 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=4 delay_s=0.03 delayed_sends=68 id=12 type=reply src=0 dest=5 ttl=62
+2026-10-21 16:32:50,715 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=13 type=reply src=0 dest=5 ttl=64 bytes=10
+2026-10-21 16:32:50,715 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=2 delay_s=0.01 delayed_sends=69 id=13 type=reply src=0 dest=5 ttl=63
+2026-10-21 16:32:50,727 | run=d12fdb49 | INFO | netlog.host-5 | event=send id=18 type=echo src=5 dest=0 next_hop=4 ttl=64
+2026-10-21 16:32:50,728 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=18 type=echo src=5 dest=0 ttl=64 bytes=10
+2026-10-21 16:32:50,728 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=2 delay_s=0.05 delayed_sends=70 id=18 type=echo src=5 dest=0 ttl=63
+2026-10-21 16:32:50,728 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=5 next_hop_real=127.0.0.1:60005 delay_s=0.015 id=10 type=reply src=0 dest=5 ttl=61
+2026-10-21 16:32:50,728 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.05 id=15 type=echo src=5 dest=0 ttl=63
+2026-10-21 16:32:50,729 | run=d12fdb49 | INFO | netlog.host-5 | event=receive id=10 type=reply src=0 dest=5 ttl=61 type_flags_binary=00000010 bytes=10 payload=B-probe-10
+2026-10-21 16:32:50,729 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=15 type=echo src=5 dest=0 ttl=63 bytes=10
+2026-10-21 16:32:50,729 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=1 delay_s=0.01 delayed_sends=69 id=15 type=echo src=5 dest=0 ttl=62
+2026-10-21 16:32:50,729 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=0 next_hop_real=127.0.0.1:60000 delay_s=0.005 id=14 type=echo src=5 dest=0 ttl=61
+2026-10-21 16:32:50,730 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=4 next_hop_real=127.0.0.1:60004 delay_s=0.03 id=11 type=reply src=0 dest=5 ttl=62
+2026-10-21 16:32:50,730 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.01 id=13 type=reply src=0 dest=5 ttl=63
+2026-10-21 16:32:50,730 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=11 type=reply src=0 dest=5 ttl=62 bytes=10
+2026-10-21 16:32:50,730 | run=d12fdb49 | INFO | netlog.host-0 | event=receive id=14 type=echo src=5 dest=0 ttl=61 type_flags_binary=00000001 bytes=10 payload=B-probe-14
+2026-10-21 16:32:50,731 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=13 type=reply src=0 dest=5 ttl=63 bytes=10
+2026-10-21 16:32:50,731 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=5 delay_s=0.015 delayed_sends=71 id=11 type=reply src=0 dest=5 ttl=61
+2026-10-21 16:32:50,731 | run=d12fdb49 | INFO | netlog.host-0 | event=send id=14 type=reply src=0 dest=5 next_hop=1 ttl=64
+2026-10-21 16:32:50,731 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=4 delay_s=0.03 delayed_sends=70 id=13 type=reply src=0 dest=5 ttl=62
+2026-10-21 16:32:50,732 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=14 type=reply src=0 dest=5 ttl=64 bytes=10
+2026-10-21 16:32:50,732 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=2 delay_s=0.01 delayed_sends=70 id=14 type=reply src=0 dest=5 ttl=63
+2026-10-21 16:32:50,745 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=1 next_hop_real=127.0.0.1:60001 delay_s=0.01 id=15 type=echo src=5 dest=0 ttl=62
+2026-10-21 16:32:50,745 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.01 id=14 type=reply src=0 dest=5 ttl=63
+2026-10-21 16:32:50,745 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.05 id=16 type=echo src=5 dest=0 ttl=63
+2026-10-21 16:32:50,746 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=4 next_hop_real=127.0.0.1:60004 delay_s=0.03 id=12 type=reply src=0 dest=5 ttl=62
+2026-10-21 16:32:50,746 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=14 type=reply src=0 dest=5 ttl=63 bytes=10
+2026-10-21 16:32:50,746 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=5 next_hop_real=127.0.0.1:60005 delay_s=0.015 id=11 type=reply src=0 dest=5 ttl=61
+2026-10-21 16:32:50,747 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=15 type=echo src=5 dest=0 ttl=62 bytes=10
+2026-10-21 16:32:50,747 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=4 delay_s=0.03 delayed_sends=71 id=14 type=reply src=0 dest=5 ttl=62
+2026-10-21 16:32:50,747 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=12 type=reply src=0 dest=5 ttl=62 bytes=10
+2026-10-21 16:32:50,747 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=0 delay_s=0.005 delayed_sends=71 id=15 type=echo src=5 dest=0 ttl=61
+2026-10-21 16:32:50,747 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=16 type=echo src=5 dest=0 ttl=63 bytes=10
+2026-10-21 16:32:50,747 | run=d12fdb49 | INFO | netlog.host-5 | event=receive id=11 type=reply src=0 dest=5 ttl=61 type_flags_binary=00000010 bytes=10 payload=B-probe-11
+2026-10-21 16:32:50,748 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=5 delay_s=0.015 delayed_sends=72 id=12 type=reply src=0 dest=5 ttl=61
+2026-10-21 16:32:50,748 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=1 delay_s=0.01 delayed_sends=72 id=16 type=echo src=5 dest=0 ttl=62
+2026-10-21 16:32:50,748 | run=d12fdb49 | INFO | netlog.host-5 | event=send id=19 type=echo src=5 dest=0 next_hop=4 ttl=64
+2026-10-21 16:32:50,749 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=19 type=echo src=5 dest=0 ttl=64 bytes=10
+2026-10-21 16:32:50,749 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=2 delay_s=0.05 delayed_sends=73 id=19 type=echo src=5 dest=0 ttl=63
+2026-10-21 16:32:50,760 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.05 id=17 type=echo src=5 dest=0 ttl=63
+2026-10-21 16:32:50,761 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=1 next_hop_real=127.0.0.1:60001 delay_s=0.01 id=16 type=echo src=5 dest=0 ttl=62
+2026-10-21 16:32:50,761 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=0 next_hop_real=127.0.0.1:60000 delay_s=0.005 id=15 type=echo src=5 dest=0 ttl=61
+2026-10-21 16:32:50,761 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=17 type=echo src=5 dest=0 ttl=63 bytes=10
+2026-10-21 16:32:50,761 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=16 type=echo src=5 dest=0 ttl=62 bytes=10
+2026-10-21 16:32:50,761 | run=d12fdb49 | INFO | netlog.host-0 | event=receive id=15 type=echo src=5 dest=0 ttl=61 type_flags_binary=00000001 bytes=10 payload=B-probe-15
+2026-10-21 16:32:50,762 | run=d12fdb49 | INFO | netlog.host-0 | event=send id=15 type=reply src=0 dest=5 next_hop=1 ttl=64
+2026-10-21 16:32:50,762 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=0 delay_s=0.005 delayed_sends=72 id=16 type=echo src=5 dest=0 ttl=61
+2026-10-21 16:32:50,762 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=1 delay_s=0.01 delayed_sends=73 id=17 type=echo src=5 dest=0 ttl=62
+2026-10-21 16:32:50,762 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=4 next_hop_real=127.0.0.1:60004 delay_s=0.03 id=13 type=reply src=0 dest=5 ttl=62
+2026-10-21 16:32:50,763 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=15 type=reply src=0 dest=5 ttl=64 bytes=10
+2026-10-21 16:32:50,763 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=2 delay_s=0.01 delayed_sends=73 id=15 type=reply src=0 dest=5 ttl=63
+2026-10-21 16:32:50,763 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=13 type=reply src=0 dest=5 ttl=62 bytes=10
+2026-10-21 16:32:50,763 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=5 delay_s=0.015 delayed_sends=74 id=13 type=reply src=0 dest=5 ttl=61
+2026-10-21 16:32:50,763 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=5 next_hop_real=127.0.0.1:60005 delay_s=0.015 id=12 type=reply src=0 dest=5 ttl=61
+2026-10-21 16:32:50,763 | run=d12fdb49 | INFO | netlog.host-5 | event=receive id=12 type=reply src=0 dest=5 ttl=61 type_flags_binary=00000010 bytes=10 payload=B-probe-12
+2026-10-21 16:32:50,776 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=1 next_hop_real=127.0.0.1:60001 delay_s=0.01 id=17 type=echo src=5 dest=0 ttl=62
+2026-10-21 16:32:50,776 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=0 next_hop_real=127.0.0.1:60000 delay_s=0.005 id=16 type=echo src=5 dest=0 ttl=61
+2026-10-21 16:32:50,777 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=4 next_hop_real=127.0.0.1:60004 delay_s=0.03 id=14 type=reply src=0 dest=5 ttl=62
+2026-10-21 16:32:50,778 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.01 id=15 type=reply src=0 dest=5 ttl=63
+2026-10-21 16:32:50,778 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=17 type=echo src=5 dest=0 ttl=62 bytes=10
+2026-10-21 16:32:50,778 | run=d12fdb49 | INFO | netlog.host-0 | event=receive id=16 type=echo src=5 dest=0 ttl=61 type_flags_binary=00000001 bytes=10 payload=B-probe-16
+2026-10-21 16:32:50,778 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=14 type=reply src=0 dest=5 ttl=62 bytes=10
+2026-10-21 16:32:50,779 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=0 delay_s=0.005 delayed_sends=74 id=17 type=echo src=5 dest=0 ttl=61
+2026-10-21 16:32:50,779 | run=d12fdb49 | INFO | netlog.host-0 | event=send id=16 type=reply src=0 dest=5 next_hop=1 ttl=64
+2026-10-21 16:32:50,779 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=15 type=reply src=0 dest=5 ttl=63 bytes=10
+2026-10-21 16:32:50,779 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=5 delay_s=0.015 delayed_sends=75 id=14 type=reply src=0 dest=5 ttl=61
+2026-10-21 16:32:50,780 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=4 delay_s=0.03 delayed_sends=74 id=15 type=reply src=0 dest=5 ttl=62
+2026-10-21 16:32:50,780 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.05 id=18 type=echo src=5 dest=0 ttl=63
+2026-10-21 16:32:50,780 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=16 type=reply src=0 dest=5 ttl=64 bytes=10
+2026-10-21 16:32:50,780 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=2 delay_s=0.01 delayed_sends=75 id=16 type=reply src=0 dest=5 ttl=63
+2026-10-21 16:32:50,780 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=5 next_hop_real=127.0.0.1:60005 delay_s=0.015 id=13 type=reply src=0 dest=5 ttl=61
+2026-10-21 16:32:50,780 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=18 type=echo src=5 dest=0 ttl=63 bytes=10
+2026-10-21 16:32:50,780 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=1 delay_s=0.01 delayed_sends=75 id=18 type=echo src=5 dest=0 ttl=62
+2026-10-21 16:32:50,780 | run=d12fdb49 | INFO | netlog.host-5 | event=receive id=13 type=reply src=0 dest=5 ttl=61 type_flags_binary=00000010 bytes=10 payload=B-probe-13
+2026-10-21 16:32:50,791 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=0 next_hop_real=127.0.0.1:60000 delay_s=0.005 id=17 type=echo src=5 dest=0 ttl=61
+2026-10-21 16:32:50,791 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=1 next_hop_real=127.0.0.1:60001 delay_s=0.01 id=18 type=echo src=5 dest=0 ttl=62
+2026-10-21 16:32:50,792 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.01 id=16 type=reply src=0 dest=5 ttl=63
+2026-10-21 16:32:50,792 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=18 type=echo src=5 dest=0 ttl=62 bytes=10
+2026-10-21 16:32:50,792 | run=d12fdb49 | INFO | netlog.host-0 | event=receive id=17 type=echo src=5 dest=0 ttl=61 type_flags_binary=00000001 bytes=10 payload=B-probe-17
+2026-10-21 16:32:50,793 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=16 type=reply src=0 dest=5 ttl=63 bytes=10
+2026-10-21 16:32:50,793 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=0 delay_s=0.005 delayed_sends=76 id=18 type=echo src=5 dest=0 ttl=61
+2026-10-21 16:32:50,793 | run=d12fdb49 | INFO | netlog.host-0 | event=send id=17 type=reply src=0 dest=5 next_hop=1 ttl=64
+2026-10-21 16:32:50,793 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=4 delay_s=0.03 delayed_sends=76 id=16 type=reply src=0 dest=5 ttl=62
+2026-10-21 16:32:50,793 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=17 type=reply src=0 dest=5 ttl=64 bytes=10
+2026-10-21 16:32:50,794 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=2 delay_s=0.01 delayed_sends=77 id=17 type=reply src=0 dest=5 ttl=63
+2026-10-21 16:32:50,807 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=0 next_hop_real=127.0.0.1:60000 delay_s=0.005 id=18 type=echo src=5 dest=0 ttl=61
+2026-10-21 16:32:50,807 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=5 next_hop_real=127.0.0.1:60005 delay_s=0.015 id=14 type=reply src=0 dest=5 ttl=61
+2026-10-21 16:32:50,808 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.01 id=17 type=reply src=0 dest=5 ttl=63
+2026-10-21 16:32:50,808 | run=d12fdb49 | INFO | netlog.host-0 | event=receive id=18 type=echo src=5 dest=0 ttl=61 type_flags_binary=00000001 bytes=10 payload=B-probe-18
+2026-10-21 16:32:50,808 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.05 id=19 type=echo src=5 dest=0 ttl=63
+2026-10-21 16:32:50,808 | run=d12fdb49 | INFO | netlog.host-5 | event=receive id=14 type=reply src=0 dest=5 ttl=61 type_flags_binary=00000010 bytes=10 payload=B-probe-14
+2026-10-21 16:32:50,809 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=17 type=reply src=0 dest=5 ttl=63 bytes=10
+2026-10-21 16:32:50,809 | run=d12fdb49 | INFO | netlog.host-0 | event=send id=18 type=reply src=0 dest=5 next_hop=1 ttl=64
+2026-10-21 16:32:50,810 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=4 delay_s=0.03 delayed_sends=77 id=17 type=reply src=0 dest=5 ttl=62
+2026-10-21 16:32:50,810 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=18 type=reply src=0 dest=5 ttl=64 bytes=10
+2026-10-21 16:32:50,811 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=19 type=echo src=5 dest=0 ttl=63 bytes=10
+2026-10-21 16:32:50,811 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=2 delay_s=0.01 delayed_sends=78 id=18 type=reply src=0 dest=5 ttl=63
+2026-10-21 16:32:50,811 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=4 next_hop_real=127.0.0.1:60004 delay_s=0.03 id=15 type=reply src=0 dest=5 ttl=62
+2026-10-21 16:32:50,811 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=1 delay_s=0.01 delayed_sends=78 id=19 type=echo src=5 dest=0 ttl=62
+2026-10-21 16:32:50,812 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=15 type=reply src=0 dest=5 ttl=62 bytes=10
+2026-10-21 16:32:50,812 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=5 delay_s=0.015 delayed_sends=76 id=15 type=reply src=0 dest=5 ttl=61
+2026-10-21 16:32:50,822 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=1 next_hop_real=127.0.0.1:60001 delay_s=0.01 id=19 type=echo src=5 dest=0 ttl=62
+2026-10-21 16:32:50,823 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.01 id=18 type=reply src=0 dest=5 ttl=63
+2026-10-21 16:32:50,823 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=4 next_hop_real=127.0.0.1:60004 delay_s=0.03 id=16 type=reply src=0 dest=5 ttl=62
+2026-10-21 16:32:50,823 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=19 type=echo src=5 dest=0 ttl=62 bytes=10
+2026-10-21 16:32:50,824 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=0 delay_s=0.005 delayed_sends=79 id=19 type=echo src=5 dest=0 ttl=61
+2026-10-21 16:32:50,824 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=18 type=reply src=0 dest=5 ttl=63 bytes=10
+2026-10-21 16:32:50,824 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=4 delay_s=0.03 delayed_sends=79 id=18 type=reply src=0 dest=5 ttl=62
+2026-10-21 16:32:50,824 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=16 type=reply src=0 dest=5 ttl=62 bytes=10
+2026-10-21 16:32:50,824 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=5 delay_s=0.015 delayed_sends=77 id=16 type=reply src=0 dest=5 ttl=61
+2026-10-21 16:32:50,839 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=5 next_hop_real=127.0.0.1:60005 delay_s=0.015 id=15 type=reply src=0 dest=5 ttl=61
+2026-10-21 16:32:50,839 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=0 next_hop_real=127.0.0.1:60000 delay_s=0.005 id=19 type=echo src=5 dest=0 ttl=61
+2026-10-21 16:32:50,839 | run=d12fdb49 | INFO | netlog.host-0 | event=receive id=19 type=echo src=5 dest=0 ttl=61 type_flags_binary=00000001 bytes=10 payload=B-probe-19
+2026-10-21 16:32:50,840 | run=d12fdb49 | INFO | netlog.host-0 | event=send id=19 type=reply src=0 dest=5 next_hop=1 ttl=64
+2026-10-21 16:32:50,840 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=5 next_hop_real=127.0.0.1:60005 delay_s=0.015 id=16 type=reply src=0 dest=5 ttl=61
+2026-10-21 16:32:50,840 | run=d12fdb49 | INFO | netlog.host-5 | event=receive id=15 type=reply src=0 dest=5 ttl=61 type_flags_binary=00000010 bytes=10 payload=B-probe-15
+2026-10-21 16:32:50,840 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=19 type=reply src=0 dest=5 ttl=64 bytes=10
+2026-10-21 16:32:50,841 | run=d12fdb49 | INFO | netlog.router-1 | event=delay next_hop=2 delay_s=0.01 delayed_sends=80 id=19 type=reply src=0 dest=5 ttl=63
+2026-10-21 16:32:50,841 | run=d12fdb49 | INFO | netlog.host-5 | event=receive id=16 type=reply src=0 dest=5 ttl=61 type_flags_binary=00000010 bytes=10 payload=B-probe-16
+2026-10-21 16:32:50,854 | run=d12fdb49 | INFO | netlog.router-1 | event=forward next_hop=2 next_hop_real=127.0.0.1:60002 delay_s=0.01 id=19 type=reply src=0 dest=5 ttl=63
+2026-10-21 16:32:50,854 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=4 next_hop_real=127.0.0.1:60004 delay_s=0.03 id=17 type=reply src=0 dest=5 ttl=62
+2026-10-21 16:32:50,855 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=4 next_hop_real=127.0.0.1:60004 delay_s=0.03 id=18 type=reply src=0 dest=5 ttl=62
+2026-10-21 16:32:50,855 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=19 type=reply src=0 dest=5 ttl=63 bytes=10
+2026-10-21 16:32:50,855 | run=d12fdb49 | INFO | netlog.router-2 | event=delay next_hop=4 delay_s=0.03 delayed_sends=80 id=19 type=reply src=0 dest=5 ttl=62
+2026-10-21 16:32:50,855 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=17 type=reply src=0 dest=5 ttl=62 bytes=10
+2026-10-21 16:32:50,855 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=5 delay_s=0.015 delayed_sends=78 id=17 type=reply src=0 dest=5 ttl=61
+2026-10-21 16:32:50,855 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=18 type=reply src=0 dest=5 ttl=62 bytes=10
+2026-10-21 16:32:50,855 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=5 delay_s=0.015 delayed_sends=79 id=18 type=reply src=0 dest=5 ttl=61
+2026-10-21 16:32:50,885 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=5 next_hop_real=127.0.0.1:60005 delay_s=0.015 id=17 type=reply src=0 dest=5 ttl=61
+2026-10-21 16:32:50,885 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=5 next_hop_real=127.0.0.1:60005 delay_s=0.015 id=18 type=reply src=0 dest=5 ttl=61
+2026-10-21 16:32:50,886 | run=d12fdb49 | INFO | netlog.host-5 | event=receive id=17 type=reply src=0 dest=5 ttl=61 type_flags_binary=00000010 bytes=10 payload=B-probe-17
+2026-10-21 16:32:50,886 | run=d12fdb49 | INFO | netlog.host-5 | event=receive id=18 type=reply src=0 dest=5 ttl=61 type_flags_binary=00000010 bytes=10 payload=B-probe-18
+2026-10-21 16:32:50,900 | run=d12fdb49 | INFO | netlog.router-2 | event=forward next_hop=4 next_hop_real=127.0.0.1:60004 delay_s=0.03 id=19 type=reply src=0 dest=5 ttl=62
+2026-10-21 16:32:50,900 | run=d12fdb49 | INFO | netlog.router-4 | event=receive id=19 type=reply src=0 dest=5 ttl=62 bytes=10
+2026-10-21 16:32:50,901 | run=d12fdb49 | INFO | netlog.router-4 | event=delay next_hop=5 delay_s=0.015 delayed_sends=80 id=19 type=reply src=0 dest=5 ttl=61
+2026-10-21 16:32:50,931 | run=d12fdb49 | INFO | netlog.router-4 | event=forward next_hop=5 next_hop_real=127.0.0.1:60005 delay_s=0.015 id=19 type=reply src=0 dest=5 ttl=61
+2026-10-21 16:32:50,932 | run=d12fdb49 | INFO | netlog.host-5 | event=receive id=19 type=reply src=0 dest=5 ttl=61 type_flags_binary=00000010 bytes=10 payload=B-probe-19
+2026-10-21 16:32:50,934 | run=d12fdb49 | INFO | netlog.host-0 | event=shutdown
+2026-10-21 16:32:50,934 | run=d12fdb49 | INFO | netlog.host-5 | event=shutdown
+2026-10-21 16:32:51,848 | run=d12fdb49 | INFO | netlog.router-1 | event=shutdown
+2026-10-21 16:32:51,863 | run=d12fdb49 | INFO | netlog.router-2 | event=shutdown
+2026-10-21 16:32:51,957 | run=d12fdb49 | INFO | netlog.router-3 | event=shutdown
+2026-10-21 16:32:52,925 | run=d12fdb49 | INFO | netlog.router-4 | event=shutdown

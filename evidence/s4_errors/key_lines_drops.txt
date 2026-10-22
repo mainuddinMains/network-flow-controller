@@ -1,0 +1,4 @@
+2026-10-21 16:33:05,955 | run=d12fdb49 | WARNING | netlog.router-1 | event=drop reason=no_route id=0 type=echo src=0 dest=9 ttl=63 no_route_drops=1
+2026-10-21 16:33:05,955 | run=d12fdb49 | WARNING | netlog.router-1 | event=drop reason=malformed_too_short bytes=2 min=9 malformed_drops=1
+2026-10-21 16:33:05,955 | run=d12fdb49 | WARNING | netlog.router-1 | event=drop reason=malformed_oversized bytes=1300 max=1200 malformed_drops=2
+2026-10-21 16:33:05,955 | run=d12fdb49 | WARNING | netlog.host-5 | event=drop reason=malformed_too_short bytes=2 min=9 malformed_drops=1

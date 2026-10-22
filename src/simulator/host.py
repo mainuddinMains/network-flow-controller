@@ -33,6 +33,10 @@ DEFAULT_PROBE_TIMEOUT_S = 1.0
 _DEFAULT_SOCKET_TIMEOUT_S = 1.0
 _MIN_SOCKET_TIMEOUT_S = 0.001
 
+# How many recently timed-out probe ids to remember, so a reply that
+# arrives after its probe expired can be told apart from a stray reply.
+_TIMED_OUT_HISTORY = 1024
+
 # Local datagram that unblocks recvfrom so deadlines can be recomputed.
 _WAKEUP_DATAGRAM = b"\xff\xffPROBE_WAKE"
 
@@ -112,6 +116,7 @@ class Host:
         self._next_identifier = 0
         self._outstanding: dict[int, OutstandingProbe] = {}
         self._probe_results: list[ProbeResult] = []
+        self._timed_out: dict[int, float] = {}
         self._listener_thread: threading.Thread | None = None
         self.malformed_drops = 0
 
@@ -179,6 +184,12 @@ class Host:
         except OSError:
             pass
 
+    def _remember_timeout(self, identifier: int, when: float) -> None:
+        """Record a timed-out id. Caller must hold _probe_lock."""
+        self._timed_out[identifier] = when
+        while len(self._timed_out) > _TIMED_OUT_HISTORY:
+            self._timed_out.pop(next(iter(self._timed_out)))
+
     def _expire_probes(self, now: float | None = None) -> list[ProbeResult]:
         """Mark unanswered probes past their deadline as timed out."""
         if now is None:
@@ -200,6 +211,7 @@ class Host:
                     completed_at=now,
                 )
                 self._probe_results.append(result)
+                self._remember_timeout(identifier, now)
                 expired.append(result)
         for result in expired:
             self._log_event(
@@ -343,6 +355,7 @@ class Host:
             src=header["source"],
             dest=header["destination"],
             ttl=header["TTL"],
+            type_flags_binary=f'{header["type_flags"]:08b}',
             bytes=len(payload),
             payload=truncated,
         )
@@ -352,22 +365,35 @@ class Host:
         if not (header["type_flags"] & self.flags["reply"]):
             return None
 
-        identifier = header["identifier"]
+        identifier = int(header["identifier"])
         source = header["source"]
         now = time.monotonic()
 
         with self._probe_lock:
             probe = self._outstanding.get(identifier)
             if probe is None:
-                self._log_event(
-                    "drop",
-                    _level=logging.WARNING,
-                    reason="unmatched_reply",
-                    id=identifier,
-                    type="reply",
-                    src=source,
-                    dest=self.virtual_address,
-                )
+                timed_out_at = self._timed_out.get(identifier)
+                if timed_out_at is not None:
+                    self._log_event(
+                        "drop",
+                        _level=logging.WARNING,
+                        reason="late_after_timeout",
+                        id=identifier,
+                        type="reply",
+                        src=source,
+                        dest=self.virtual_address,
+                        late_by_s=round(now - timed_out_at, 6),
+                    )
+                else:
+                    self._log_event(
+                        "drop",
+                        _level=logging.WARNING,
+                        reason="unmatched_reply",
+                        id=identifier,
+                        type="reply",
+                        src=source,
+                        dest=self.virtual_address,
+                    )
                 return None
             if source != probe.destination:
                 self._log_event(
@@ -461,6 +487,7 @@ class Host:
         destination: int,
         payload: str | bytes = "",
         timeout: float | None = None,
+        ttl: int = DEFAULT_TTL
     ) -> int:
         """Send an echo probe and track it until reply or timeout.
 
@@ -468,6 +495,7 @@ class Host:
         :param payload: Probe payload as text or bytes.
         :param timeout: Optional per-probe timeout in seconds; defaults to
             ``self.probe_timeout``.
+        :param ttl: Hop limit for the probe.
         :return: The 16-bit message identifier used for the probe.
         :raises ValueError: if destination or timeout is invalid.
         :raises OSError: if the UDP send fails (no outstanding entry left).
@@ -513,7 +541,7 @@ class Host:
             self._outstanding[identifier] = probe
 
         datagram = self._create_datagram(
-            DEFAULT_TTL,
+            ttl,
             self.flags["echo"],
             0,
             identifier,

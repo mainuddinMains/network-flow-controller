@@ -1,0 +1,44 @@
+{
+  "scenario": "measure/baseline/delay100ms_loss0pct_seed101",
+  "requested_seed": 101,
+  "router_seeds": {
+    "1": 102,
+    "2": 103,
+    "3": 104,
+    "4": 105
+  },
+  "edits": {
+    "routerA.ini": {
+      "loss.loss_chance": 0,
+      "routing.destinations": [
+        5,
+        0
+      ],
+      "routing.local_forwarding": [
+        2,
+        0
+      ]
+    },
+    "routerB.ini": {
+      "loss.loss_chance": 0.0,
+      "routing.delays": [
+        100,
+        100
+      ]
+    },
+    "routerC.ini": {
+      "loss.loss_chance": 0
+    },
+    "routerD.ini": {
+      "loss.loss_chance": 0,
+      "routing.destinations": [
+        5,
+        0
+      ],
+      "routing.local_forwarding": [
+        5,
+        2
+      ]
+    }
+  }
+}

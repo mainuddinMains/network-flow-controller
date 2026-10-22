@@ -1,0 +1,1 @@
+2026-10-21 16:33:09,655 | run=d12fdb49 | WARNING | netlog.router-2 | event=drop reason=forced_drop next_hop=4 forced_drops=1 id=0 type=echo src=0 dest=5 ttl=62

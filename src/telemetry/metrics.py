@@ -4,6 +4,8 @@ import math
 from collections.abc import Mapping
 from types import MappingProxyType
 
+from .fairness import jains_fairness
+
 _REQUIRED_FEEDBACK = ("rtt", "bytes_acked", "packets_sent", "packets_dropped")
 
 
@@ -84,3 +86,39 @@ class MetricsRecorder:
     def snapshot(self) -> dict[int, dict[str, object]]:
         """Return detached current observations keyed by flow ID."""
         return {flow_id: row.copy() for flow_id, row in self._latest.items()}
+
+    def summary(self) -> dict[str, object]:
+        """Return aggregate statistics across all recorded flows.
+
+        :returns: Dict with ``duration``, ``fairness``,
+            ``total_throughput_bytes_per_second``, and ``flows`` (mapping
+            flow_id → ``{"throughput": float, "bytes_acked": int}``).
+        """
+        if not self._series:
+            return {
+                "duration": 0.0,
+                "fairness": 1.0,
+                "total_throughput_bytes_per_second": 0.0,
+                "flows": {},
+            }
+
+        flow_stats: dict[int, dict[str, object]] = {}
+        for flow_id, rows in self._series.items():
+            total_bytes = sum(int(row["bytes_acked"]) for row in rows)
+            first_time = float(rows[0]["time"])
+            last_row = rows[-1]
+            span = float(last_row["time"]) + float(last_row["interval"]) - first_time
+            throughput = total_bytes / span if span > 0 else 0.0
+            flow_stats[flow_id] = {"throughput": throughput, "bytes_acked": total_bytes}
+
+        throughputs = [float(f["throughput"]) for f in flow_stats.values()]
+        duration = max(
+            float(rows[-1]["time"]) + float(rows[-1]["interval"])
+            for rows in self._series.values()
+        )
+        return {
+            "duration": duration,
+            "fairness": jains_fairness(throughputs),
+            "total_throughput_bytes_per_second": sum(throughputs),
+            "flows": flow_stats,
+        }

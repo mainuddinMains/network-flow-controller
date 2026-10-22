@@ -1,0 +1,9 @@
+2026-10-21 16:33:01,854 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=0 type=echo src=0 dest=5 ttl=8 bytes=4
+2026-10-21 16:33:01,876 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=0 type=echo src=0 dest=5 ttl=7 bytes=4
+2026-10-21 16:33:01,891 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=0 type=echo src=0 dest=5 ttl=6 bytes=4
+2026-10-21 16:33:01,907 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=0 type=echo src=0 dest=5 ttl=5 bytes=4
+2026-10-21 16:33:01,923 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=0 type=echo src=0 dest=5 ttl=4 bytes=4
+2026-10-21 16:33:01,938 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=0 type=echo src=0 dest=5 ttl=3 bytes=4
+2026-10-21 16:33:01,953 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=0 type=echo src=0 dest=5 ttl=2 bytes=4
+2026-10-21 16:33:01,971 | run=d12fdb49 | INFO | netlog.router-2 | event=receive id=0 type=echo src=0 dest=5 ttl=1 bytes=4
+2026-10-21 16:33:01,986 | run=d12fdb49 | INFO | netlog.router-1 | event=receive id=0 type=echo src=0 dest=5 ttl=0 bytes=4

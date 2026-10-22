@@ -1,0 +1,40 @@
+{
+  "scenario": "s2_lower",
+  "requested_seed": null,
+  "router_seeds": {
+    "1": 1561508346,
+    "2": 2076806775,
+    "3": 3114108392,
+    "4": 2976165154
+  },
+  "edits": {
+    "routerA.ini": {
+      "loss.loss_chance": 0,
+      "routing.destinations": [
+        5,
+        0
+      ],
+      "routing.local_forwarding": [
+        3,
+        0
+      ]
+    },
+    "routerB.ini": {
+      "loss.loss_chance": 0
+    },
+    "routerC.ini": {
+      "loss.loss_chance": 0
+    },
+    "routerD.ini": {
+      "loss.loss_chance": 0,
+      "routing.destinations": [
+        5,
+        0
+      ],
+      "routing.local_forwarding": [
+        5,
+        3
+      ]
+    }
+  }
+}

@@ -1,0 +1,9 @@
+2026-10-21 16:33:50,198 | run=54b6ce1b | WARNING | netlog.router-2 | event=drop reason=injected_loss next_hop=1 delay_s=0.02 loss_chance=0.1 loss_drops=1 id=0 type=reply src=5 dest=0 ttl=62
+2026-10-21 16:33:50,261 | run=54b6ce1b | WARNING | netlog.router-2 | event=drop reason=injected_loss next_hop=4 delay_s=0.06 loss_chance=0.1 loss_drops=2 id=8 type=echo src=0 dest=5 ttl=62
+2026-10-21 16:33:50,305 | run=54b6ce1b | WARNING | netlog.router-2 | event=drop reason=injected_loss next_hop=4 delay_s=0.06 loss_chance=0.1 loss_drops=3 id=10 type=echo src=0 dest=5 ttl=62
+2026-10-21 16:33:50,649 | run=54b6ce1b | WARNING | netlog.router-2 | event=drop reason=injected_loss next_hop=4 delay_s=0.06 loss_chance=0.1 loss_drops=4 id=27 type=echo src=0 dest=5 ttl=62
+2026-10-21 16:33:50,679 | run=54b6ce1b | WARNING | netlog.router-2 | event=drop reason=injected_loss next_hop=4 delay_s=0.06 loss_chance=0.1 loss_drops=5 id=28 type=echo src=0 dest=5 ttl=62
+2026-10-21 16:33:50,711 | run=54b6ce1b | WARNING | netlog.router-2 | event=drop reason=injected_loss next_hop=4 delay_s=0.06 loss_chance=0.1 loss_drops=6 id=30 type=echo src=0 dest=5 ttl=62
+2026-10-21 16:33:50,869 | run=54b6ce1b | WARNING | netlog.router-2 | event=drop reason=injected_loss next_hop=1 delay_s=0.02 loss_chance=0.1 loss_drops=7 id=33 type=reply src=5 dest=0 ttl=62
+2026-10-21 16:33:50,910 | run=54b6ce1b | WARNING | netlog.router-2 | event=drop reason=injected_loss next_hop=1 delay_s=0.02 loss_chance=0.1 loss_drops=8 id=34 type=reply src=5 dest=0 ttl=62
+2026-10-21 16:33:51,207 | run=54b6ce1b | WARNING | netlog.router-2 | event=drop reason=injected_loss next_hop=1 delay_s=0.02 loss_chance=0.1 loss_drops=9 id=48 type=reply src=5 dest=0 ttl=62

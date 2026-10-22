@@ -1,0 +1,1 @@
+2026-10-21 16:33:01,987 | run=d12fdb49 | WARNING | netlog.router-1 | event=drop reason=ttl_expired id=0 type=echo src=0 dest=5 ttl=0 ttl_expired_drops=1

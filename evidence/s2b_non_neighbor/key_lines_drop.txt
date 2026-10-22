@@ -1,0 +1,1 @@
+2026-10-21 16:32:57,787 | run=d12fdb49 | WARNING | netlog.router-1 | event=drop reason=next_hop_not_neighbor next_hop=4 id=0 type=echo src=0 dest=5 ttl=63 no_route_drops=1

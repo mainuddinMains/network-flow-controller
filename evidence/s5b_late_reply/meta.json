@@ -1,0 +1,40 @@
+{
+  "scenario": "s5b_late_reply",
+  "requested_seed": null,
+  "router_seeds": {
+    "1": 2690189133,
+    "2": 230846872,
+    "3": 1539793343,
+    "4": 4203411034
+  },
+  "edits": {
+    "routerA.ini": {
+      "loss.loss_chance": 0,
+      "routing.destinations": [
+        5,
+        0
+      ],
+      "routing.local_forwarding": [
+        2,
+        0
+      ]
+    },
+    "routerB.ini": {
+      "loss.loss_chance": 0
+    },
+    "routerC.ini": {
+      "loss.loss_chance": 0
+    },
+    "routerD.ini": {
+      "loss.loss_chance": 0,
+      "routing.destinations": [
+        5,
+        0
+      ],
+      "routing.local_forwarding": [
+        5,
+        2
+      ]
+    }
+  }
+}

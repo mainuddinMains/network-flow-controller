@@ -1,0 +1,40 @@
+{
+  "scenario": "s5a_forced_drop",
+  "requested_seed": null,
+  "router_seeds": {
+    "1": 3455704824,
+    "2": 389815174,
+    "3": 4215916806,
+    "4": 1153797216
+  },
+  "edits": {
+    "routerA.ini": {
+      "loss.loss_chance": 0,
+      "routing.destinations": [
+        5,
+        0
+      ],
+      "routing.local_forwarding": [
+        2,
+        0
+      ]
+    },
+    "routerB.ini": {
+      "loss.loss_chance": 0
+    },
+    "routerC.ini": {
+      "loss.loss_chance": 0
+    },
+    "routerD.ini": {
+      "loss.loss_chance": 0,
+      "routing.destinations": [
+        5,
+        0
+      ],
+      "routing.local_forwarding": [
+        5,
+        2
+      ]
+    }
+  }
+}

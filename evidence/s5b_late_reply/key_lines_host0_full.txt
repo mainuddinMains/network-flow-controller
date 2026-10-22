@@ -1,0 +1,6 @@
+2026-10-21 16:33:12,859 | run=d12fdb49 | INFO | netlog.host-0 | event=init meta_ip=127.0.0.1 meta_port=60000 address=0 entry_router=1 probe_timeout_s=1.0
+2026-10-21 16:33:12,862 | run=d12fdb49 | INFO | netlog.host-0 | event=send id=0 type=echo src=0 dest=5 next_hop=1 ttl=64
+2026-10-21 16:33:12,922 | run=d12fdb49 | WARNING | netlog.host-0 | event=timeout reason=probe_timeout id=0 dest=5
+2026-10-21 16:33:13,016 | run=d12fdb49 | INFO | netlog.host-0 | event=receive id=0 type=reply src=5 dest=0 ttl=61 type_flags_binary=00000010 bytes=4 payload=late
+2026-10-21 16:33:13,016 | run=d12fdb49 | WARNING | netlog.host-0 | event=drop reason=late_after_timeout id=0 type=reply src=5 dest=0 late_by_s=0.09335
+2026-10-21 16:33:13,055 | run=d12fdb49 | INFO | netlog.host-0 | event=shutdown

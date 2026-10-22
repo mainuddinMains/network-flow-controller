@@ -103,42 +103,6 @@ python -m pytest tests/test_scenarios.py::test_s1_multihop -q
 
 This runs the network and checks **20 probes initiated by each host**, matching returned payloads, the upper multihop route, and no drops/timeouts for the zero-loss scenario. The harness writes `evidence/s1_multihop/`.
 
-Then display the selected request/reply trace:
-
-```bash
-cat evidence/s1_multihop/key_lines_trace_echo.txt evidence/s1_multihop/key_lines_trace_reply.txt
-```
-
-On Windows **PowerShell**, `cat` is an alias for `Get-Content`; alternatively use:
-
-```powershell
-Get-Content evidence/s1_multihop/key_lines_trace_echo.txt, evidence/s1_multihop/key_lines_trace_reply.txt
-```
-
-The trace contains the same message ID (`7`) across Host 0, the forwarding routers, and Host 5, followed by the reply in the opposite direction. This is suitable for a short recorded core demonstration.
-
-### Other acceptance scenarios
-
-```bash
-# Both static paths; unknown destination, malformed packets, TTL loop,
-# forced drop and delayed response scenarios
-python -m pytest tests/test_scenarios.py -v -s
-
-# Reproducible random-loss and delay scenario (separate from deterministic faults)
-python -m pytest tests/test_random_loss.py -v -s
-
-# Standalone 20-probe evidence scenario
-python -m pytest tests/test_evidence.py -v -s
-
-# Other simulator tests / full suite
-python -m pytest tests/test_simulator.py -v -s
-python -m pytest tests/ -v -rs
-
-# Lint
-ruff check src/ tests/
-```
-
-`tests/test_simulator.py` currently sets `PROBE_COUNT = 1` for a quick check. The separate `test_scenarios.py::test_s1_multihop` and `test_evidence.py::test_s1_multihop` send **20 probes per host**, as required by the core acceptance scenario.
 
 ### Evidence directories
 

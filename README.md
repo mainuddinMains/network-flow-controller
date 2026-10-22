@@ -194,14 +194,21 @@ implement network scheduling or metrics. Two real five-flow integration cases
 skip with an explicit dependency reason while the teammate APIs are absent.
 They will exercise the real implementations once the APIs are exposed.
 
-The original import tests are unchanged. Follow [CLAUDE.md](CLAUDE.md) before
-creating or modifying test files.
+## Architecture
+
+| Package | Responsibility |
+|---|---|
+| `src/algorithm/` | Congestion controllers: AIMD, Reno, RFC 6298 RTT |
+| `src/simulator/` | Discrete-event simulation: Link, TrafficGenerator, Scheduler, Router, Host |
+| `src/telemetry/` | Metrics, Jain's fairness index, ExperimentLogger |
+| `src/integration.py` | Orchestration wiring algorithm ↔ simulator ↔ telemetry |
 
 ## Documentation
 
 - [Algorithm design](docs/algorithm-design.md)
-- [Integration contract and pending work](docs/integration-contract.md)
-- [Issue scope and ownership](docs/issue-solutions.md)
+- [Integration contract](docs/integration-contract.md)
+- [Progress report](docs/progress-report.md)
+- [Mainuddin's individual statement](docs/individual-statement-mainuddin.md)
 
 ## License
 

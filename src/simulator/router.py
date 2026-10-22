@@ -172,6 +172,10 @@ class Router:
         # Injected random-loss drops, kept separate from the drop counters
         # above so experiments can tell configured loss from other causes.
         self.loss_drops = 0
+        # Forced drops, kept separate from injected random loss.
+        self.forced_drops = 0
+        # Optional test hook: callable(header_dict) -> bool. True forces a drop.
+        self.drop_predicate = None
         # Packets that were scheduled with a positive link delay.
         self.delayed_sends = 0
 
@@ -198,6 +202,28 @@ class Router:
         shared formatter adds the timestamp, run id, and device name.
         """
         self._logger.log(_level, format_event(event, **fields))
+
+    def set_seed(self, seed: int) -> None:
+        """Reseed this router's loss generator and log the new seed."""
+        self.seed = int(seed)
+        self._rng = random.Random(self.seed)
+        self._log_event("seed", seed=self.seed)
+
+    def drop_once(self, match) -> None:
+        """Force-drop only the first packet for which match(header) is true."""
+        lock = threading.Lock()
+        fired = []
+
+        def predicate(header):
+            if not match(header):
+                return False
+            with lock:
+                if fired:
+                    return False
+                fired.append(True)
+                return True
+
+        self.drop_predicate = predicate
 
     # ------------------------------------------------------------------
     # Datagram encoding and decoding
@@ -385,6 +411,19 @@ class Router:
                 next_hop=forward,
                 **packet,
                 no_route_drops=self.no_route_drops,
+            )
+            return
+
+        predicate = self.drop_predicate
+        if predicate is not None and predicate(header):
+            self.forced_drops += 1
+            self._log_event(
+                "drop",
+                _level=logging.WARNING,
+                reason="forced_drop",
+                next_hop=forward,
+                forced_drops=self.forced_drops,
+                **packet,
             )
             return
 

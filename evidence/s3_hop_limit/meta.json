@@ -1,0 +1,48 @@
+{
+  "scenario": "s3_hop_limit",
+  "requested_seed": null,
+  "router_seeds": {
+    "1": 1386735224,
+    "2": 2915778674,
+    "3": 4290670267,
+    "4": 3085120986
+  },
+  "edits": {
+    "routerA.ini": {
+      "loss.loss_chance": 0,
+      "routing.destinations": [
+        5,
+        0
+      ],
+      "routing.local_forwarding": [
+        2,
+        0
+      ]
+    },
+    "routerB.ini": {
+      "loss.loss_chance": 0,
+      "routing.destinations": [
+        5,
+        0
+      ],
+      "routing.local_forwarding": [
+        1,
+        1
+      ]
+    },
+    "routerC.ini": {
+      "loss.loss_chance": 0
+    },
+    "routerD.ini": {
+      "loss.loss_chance": 0,
+      "routing.destinations": [
+        5,
+        0
+      ],
+      "routing.local_forwarding": [
+        5,
+        2
+      ]
+    }
+  }
+}

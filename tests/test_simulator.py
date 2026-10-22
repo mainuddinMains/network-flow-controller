@@ -11,7 +11,7 @@ ROUTER_CONFIG_DIR = REPO_ROOT / "src" / "simulator" / "router configurations"
 HOST_CONFIG_DIR = REPO_ROOT / "src" / "simulator" / "host configurations"
 
 PROBE_COUNT = 20
-DEFAULT_TTL = 64
+DEFAULT_TTL = 10
 REPLY_DEADLINE_S = 15.0
 
 
@@ -37,16 +37,7 @@ def _record_kept_datagrams(host, records):
 def _send_probes(host, destination, label):
     """Send PROBE_COUNT echo-flagged probes from ``host`` to ``destination``."""
     for index in range(PROBE_COUNT):
-        datagram = host._create_datagram(
-            DEFAULT_TTL,
-            host.flags["echo"],
-            0,
-            host._new_identifier(),
-            host.virtual_address,
-            destination,
-            f"{label}-{index}",
-        )
-        host._send_datagram(datagram, destination)
+        host.send_probe(destination, f"{label}-{index}")
         time.sleep(0.02)
 
 
@@ -127,6 +118,12 @@ def test_network():
             ):
                 break
             time.sleep(0.1)
+
+        assert len(host_a.rtt_samples()) == PROBE_COUNT
+        assert len(host_b.rtt_samples()) == PROBE_COUNT
+        assert not host_a.outstanding_probe_ids()
+        assert not host_b.outstanding_probe_ids()
+
     finally:
         for host in (host_a, host_b):
             host._stop_event.set()

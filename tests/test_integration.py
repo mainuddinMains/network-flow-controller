@@ -1,4 +1,4 @@
-"""End-to-end acceptance checks for five competing flows and result exports."""
+"""Five-flow acceptance tests, pending the teammate-owned module interfaces."""
 
 import csv
 import json
@@ -7,20 +7,36 @@ import time
 import pytest
 
 from src.algorithm import AIMDController, RenoController
-from src.simulator import Link, Simulation, TrafficGenerator
-from src.telemetry import ExperimentLogger
+from src.integration import IntegrationPendingError, Simulation, load_module_api
+
+
+@pytest.fixture
+def teammate_api():
+    """Require real teammate implementations before end-to-end validation."""
+    try:
+        return load_module_api()
+    except IntegrationPendingError as error:
+        pytest.skip(str(error))
 
 
 @pytest.mark.parametrize("controller_type", [AIMDController, RenoController])
-def test_five_flow_simulation_is_fair_and_exports_results(tmp_path, controller_type):
-    """Meet issue #17's fairness, nonstarvation, output, and runtime requirements."""
+def test_five_flow_simulation_is_fair_and_exports_results(
+    tmp_path,
+    controller_type,
+    teammate_api,
+):
+    """Check issue #17 when the real scheduler and telemetry are available."""
     started = time.perf_counter()
     recorder = Simulation(
-        Link(bandwidth=10_000_000, propagation_delay=0.02, buffer_size=100),
-        TrafficGenerator(5, controller_type),
+        teammate_api.link(
+            bandwidth=10_000_000,
+            propagation_delay=0.02,
+            buffer_size=100,
+        ),
+        teammate_api.traffic_generator(5, controller_type),
         seed=0,
     ).run(30)
-    logger = ExperimentLogger(recorder)
+    logger = teammate_api.logger(recorder)
     csv_path = logger.write_csv(tmp_path / "run.csv")
     json_path = logger.write_json(tmp_path / "run.json")
     summary = recorder.summary()

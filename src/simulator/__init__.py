@@ -1,15 +1,7 @@
-"""Packet-level bottleneck simulation and traffic generation."""
+"""Network simulator: link, traffic generation, and discrete-event scheduling."""
 
-from .link import Link, Packet, Transmission
-from .simulation import Scheduler, Simulation
-from .traffic import Flow, TrafficGenerator
+from .link import Link
+from .simulation import Scheduler
+from .traffic import TrafficGenerator
 
-__all__ = [
-    "Flow",
-    "Link",
-    "Packet",
-    "Scheduler",
-    "Simulation",
-    "TrafficGenerator",
-    "Transmission",
-]
+__all__ = ["Link", "Scheduler", "TrafficGenerator"]

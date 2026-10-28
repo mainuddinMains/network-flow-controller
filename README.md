@@ -9,134 +9,74 @@ Saint Louis University · Computer Networks
 | Henry Morgan | Network simulator |
 | Adrian Wehlen | Telemetry & evaluation |
 
-Run reproducible packet-level experiments with independent flows sharing one
-finite FIFO bottleneck. The AIMD baseline and Reno-style controller adapt their
-windows to loss and ECN. Telemetry exports throughput, RTT, loss, queue depth,
-and Jain's fairness to CSV, JSON, and optional PNG plots.
-
 ## Setup
 
 Python 3.10 or newer is required. From the repository root:
 
 ```bash
 python3 -m venv .venv
-source .venv/bin/activate
-# Windows: .venv\Scripts\activate
-python -m pip install -r requirements.txt
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
+pip install -e .
 ```
 
-## Run an experiment
+## Reproducible Commands
+
+**Run a 5-flow simulation (AIMD, 30 simulated seconds, 10 Mbps link):**
 
 ```bash
-python -m src.simulator --flows 5 --duration 60 --bandwidth 10Mbps --algorithm aimd --plots
+python -m src.simulator \
+  --flows 5 --duration 30 --bandwidth 10Mbps --algorithm aimd \
+  --output results/run1
 ```
 
-Duration is simulated time; the program does not sleep for that duration.
-`python -m src` provides the same interface. Run both commands from the repository
-root with the virtual environment activated.
+Switch `--algorithm aimd` to `--algorithm reno` for TCP Reno.
+Results are written to `results/run1/run.csv` and `results/run1/run.json`.
 
-| Flag | Meaning | Default |
-|---|---|---|
-| `--flows` | Independent controlled flows | `5` |
-| `--duration` | Simulated seconds | `60` |
-| `--bandwidth` | Bits/second; accepts `10Mbps`, `100Kbps`, or a number | `10Mbps` |
-| `--delay` | One-way propagation delay; accepts `20ms` or seconds | `20ms` |
-| `--buffer` | Packets awaiting departure, including the packet in service | `100` |
-| `--algorithm` | `aimd` or `reno` | `aimd` |
-| `--output` | Destination for `run.csv` and `run.json` | `results/` |
-| `--seed` | Initial pacing, random loss, and jitter seed | `0` |
-| `--packet-size` | Payload bytes and controller MSS | `1500` |
-| `--start-times` | Comma-separated start times, one per flow | All zero |
-| `--cross-traffic` | Fixed background bits/second on the same link | `0` |
-| `--loss` | Independent drop probability, in addition to buffer drops | `0` |
-| `--jitter` | Maximum extra forward propagation delay | `0` |
-| `--ecn-threshold` | Mark above this fraction of buffer occupancy | `0.5` |
-| `--plots` | Save throughput, queue, and fairness PNGs | Off |
-
-Use separate output directories to preserve experiments:
+**Run all tests:**
 
 ```bash
-python -m src.simulator --duration 30 --algorithm aimd --seed 0 --output results/aimd
-python -m src.simulator --duration 30 --algorithm reno --seed 0 --output results/reno
-python -m src.simulator --flows 3 --duration 30 --start-times 0,5,10 --cross-traffic 1Mbps --loss 0.01 --jitter 2ms --output results/staggered
+pytest tests/ -q
+# Expected: 129 passed in ~60s
 ```
 
-The CLI prints a JSON summary. CSV contains one observation per feedback
-interval per flow, including the final partial interval. JSON includes the same
-series grouped by flow ID, summary statistics, units, and configuration. Reusing
-an output directory replaces its run files.
-
-Plot an existing CSV:
-
-```bash
-python -m src.telemetry.plot --input results/aimd/run.csv
-```
-
-The noninteractive plots are saved beside the CSV in `plots/`.
-
-## Units and metrics
-
-- Control uses seconds, packets, and bytes/second.
-- Exported throughput is newly acknowledged unique payload bytes/second; RTT
-  is milliseconds; loss is a percentage of attempted transmissions.
-- Multiply throughput by eight to report bits/second.
-- Time-series fairness compares the latest rate of each active flow.
-- Summary fairness compares cumulative rates over each flow's own active
-  duration. Flows starting after the experiment ends are excluded from fairness
-  and have zero delivered bytes.
-- Retries do not count payload twice. Background traffic competes for capacity
-  but is excluded from controlled-flow telemetry.
-
-## Tests and CI
+**Lint:**
 
 ```bash
 ruff check src/ tests/
-pytest tests/ -v
-python -m pytest tests/ --cov=src --cov-report=term-missing
 ```
 
-Pytest includes the repository root in its import path. CI installs dependencies
-using the selected interpreter, then runs lint and coverage tests on pushes and
-pull requests to main.
+## Algorithm
 
-Behavior tests cover controllers, RTT estimation, recovery, queue service,
-drops, ECN, immutable feedback, reproducibility, staggered flows, cross-traffic,
-observer isolation, exports, plotting, and invalid CLI arguments. Integration
-tests run five flows for 30 simulated seconds with each controller, require
-fairness >= 0.9 and positive throughput for every flow, check matching nonempty
-CSV/JSON, and require execution under 30 wall-clock seconds.
+```python
+from src.algorithm import AIMDController, RenoController
 
-Follow [CLAUDE.md](CLAUDE.md) before creating or modifying test files.
-
-## Structure
-
-```text
-src/
-├── algorithm/controller.py   # Controllers, RTT estimation, state transitions
-├── simulator/
-│   ├── link.py               # Packets, FIFO service, ECN
-│   ├── traffic.py            # Independent flows and traffic sources
-│   ├── simulation.py         # Event scheduler, ACKs, per-RTT feedback
-│   └── cli.py                # Configuration and entry point
-└── telemetry/
-    ├── metrics.py            # Observer, fairness, CSV/JSON
-    └── plot.py               # Standalone PNG generation
-tests/                       # Behavior and integration tests
-docs/                        # Design, issue mapping, and measured results
+controller = AIMDController(cwnd=10, initial_rtt=0.04, mss=1500)
+rate = controller.step({
+    "rtt": 0.04, "loss": False, "ecn": False, "bytes_acked": 15000,
+    "packets_sent": 10, "packets_dropped": 0,
+})
+# cwnd is now 11 packets; rate is bytes/second.
 ```
 
-Controllers receive immutable feedback every estimated RTT. Telemetry only
-observes feedback and cannot change controller or simulator state. All random
-events use a local seeded RNG.
+`CongestionController` is an abstract base class. Both `AIMDController` and
+`RenoController` (with slow start, fast recovery, and RFC 6298 RTT estimation)
+are implemented.
 
-This educational model uses one bottleneck, aggregate per-RTT feedback,
-individual packet delivery ACKs, and ideal per-round drop detection. It does not
-implement a full TCP stack, cumulative-ACK retransmission timers, ACK link
-serialization, or a multi-hop topology. Results apply to these assumptions.
+## Architecture
 
-See [algorithm design](docs/algorithm-design.md),
-[issue solutions](docs/issue-solutions.md), and
-[evaluation results](docs/evaluation.md).
+| Package | Responsibility |
+|---|---|
+| `src/algorithm/` | Congestion controllers: AIMD, Reno, RFC 6298 RTT |
+| `src/simulator/` | Discrete-event simulation: Link, TrafficGenerator, Scheduler, Router, Host |
+| `src/telemetry/` | Metrics, Jain's fairness index, ExperimentLogger |
+| `src/integration.py` | Orchestration wiring algorithm ↔ simulator ↔ telemetry |
+
+## Documentation
+
+- [Algorithm design](docs/algorithm-design.md)
+- [Integration contract](docs/integration-contract.md)
+- [Progress report](docs/progress-report.md)
+- [Mainuddin's individual statement](docs/individual-statement-mainuddin.md)
 
 ## License
 

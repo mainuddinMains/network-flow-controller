@@ -1,309 +1,168 @@
-"""Discrete event scheduling, packet reception, and per-RTT feedback."""
+"""Discrete-event congestion-control scheduler for a single bottleneck link."""
 
 import heapq
-import itertools
 import math
 import random
-from collections.abc import Mapping
-from dataclasses import dataclass, field
-from types import MappingProxyType
-from typing import TYPE_CHECKING
-
-from src.algorithm import State
-
-from .link import Link, Packet
-from .traffic import Flow, TrafficGenerator
-
-if TYPE_CHECKING:
-    from src.telemetry import MetricsRecorder
-
-
-@dataclass(order=True)
-class _Event:
-    time: float
-    order: int
-    kind: str = field(compare=False)
-    payload: object = field(compare=False)
 
 
 class Scheduler:
-    """Process paced packets and ACKs against one FIFO bottleneck link."""
+    """Drive a per-RTT congestion-control simulation over a shared bottleneck.
+
+    Receiving and forwarding are modelled as a leaky-bucket queue. Each flow
+    fires an event every RTT; events are processed in simulation-time order via
+    a min-heap. The link queue is drained at the configured bandwidth between
+    consecutive events.
+
+    :param link: A ``Link`` describing the bottleneck.
+    :param seed: RNG seed for reproducible loss and jitter.
+    :param loss_probability: Per-packet random loss probability (0–1).
+    :param jitter: Standard deviation of Gaussian RTT noise in seconds.
+    """
 
     def __init__(
         self,
-        link: Link,
+        link: object,
         seed: int = 0,
         loss_probability: float = 0.0,
         jitter: float = 0.0,
     ) -> None:
-        """Seed random loss, extra one-way jitter, and initial pacing phases."""
-        if not math.isfinite(loss_probability) or not 0 <= loss_probability <= 1:
-            raise ValueError("loss_probability must be between zero and one")
-        if not math.isfinite(jitter) or jitter < 0:
-            raise ValueError("jitter must be finite and nonnegative")
+        """Validate scheduler parameters."""
+        if not math.isfinite(loss_probability) or not 0.0 <= loss_probability <= 1.0:
+            raise ValueError("loss_probability must be between 0 and 1")
+        if not math.isfinite(jitter) or jitter < 0.0:
+            raise ValueError("jitter must be finite and non-negative")
+
         self.link = link
-        self.rng = random.Random(seed)
-        self.loss_probability = loss_probability
-        self.jitter = jitter
-        self.now = 0.0
-        self._events: list[_Event] = []
-        self._counter = itertools.count()
-        self._event_log: list[Mapping[str, object]] = []
-        self._traffic: TrafficGenerator | None = None
-        self._started = False
+        self.seed = int(seed)
+        self.loss_probability = float(loss_probability)
+        self.jitter = float(jitter)
 
-    @property
-    def event_log(self) -> tuple[Mapping[str, object], ...]:
-        """Return read-only drop and ECN events with timestamps."""
-        return tuple(self._event_log)
+    def run(self, traffic: object, duration: float, recorder: object) -> object:
+        """Simulate all flows for ``duration`` seconds and return the recorder.
 
-    def _schedule(self, time: float, kind: str, payload: object) -> None:
-        heapq.heappush(self._events, _Event(time, next(self._counter), kind, payload))
-
-    def _log(self, kind: str, packet: Packet, **details: object) -> None:
-        self._event_log.append(
-            MappingProxyType(
-                {
-                    "time": self.now,
-                    "kind": kind,
-                    "flow_id": packet.flow_id,
-                    "sequence": packet.sequence,
-                    **details,
-                }
-            )
-        )
-
-    def submit(self, packet: Packet, now: float) -> bool:
-        """Enqueue a packet and schedule reception, returning False on a drop."""
-        if not math.isfinite(now) or now < self.now:
-            raise ValueError("scheduler time cannot move backwards")
-        self.now = now
-        random_drop = self.rng.random() < self.loss_probability
-        transmission = None if random_drop else self.link.enqueue(packet, now)
-        if transmission is None:
-            self._log("drop", packet, reason="random" if random_drop else "buffer")
-            if self._traffic is not None and packet.flow_id in self._traffic.flows:
-                flow = self._traffic.flows[packet.flow_id]
-                flow.dropped += 1
-                flow.lost.add(packet.sequence)
-            return False
-        if transmission.ecn:
-            self._log("ecn", packet)
-        extra_delay = self.rng.uniform(0, self.jitter) if self.jitter else 0.0
-        arrival = transmission.departure_at + self.link.propagation_delay + extra_delay
-        self._schedule(arrival, "receive", (packet, transmission.ecn))
-        return True
-
-    def _send(self, flow: Flow) -> None:
-        packet = None
-        while flow.retries:
-            sequence = flow.retries.popleft()
-            flow.queued_retries.discard(sequence)
-            if sequence in flow.outstanding:
-                packet = Packet(
-                    flow.flow_id,
-                    sequence,
-                    self.now,
-                    flow.packet_size,
-                    True,
-                )
-                flow.retransmitted.add(sequence)
-                break
-        if packet is None and len(flow.outstanding) < max(1, int(flow.controller.cwnd)):
-            packet = Packet(
-                flow.flow_id,
-                flow.next_sequence,
-                self.now,
-                flow.packet_size,
-            )
-            flow.next_sequence += 1
-        if packet is not None:
-            flow.outstanding[packet.sequence] = packet
-            flow.sent += 1
-            self.submit(packet, self.now)
-        interval = flow.packet_size / flow.controller.send_rate
-        self._schedule(self.now + interval, "send", flow)
-
-    def _receive(self, packet: Packet, ecn: bool) -> None:
-        assert self._traffic is not None
-        if packet.flow_id not in self._traffic.flows:
-            return
-        flow = self._traffic.flows[packet.flow_id]
-        is_new = packet.sequence not in flow.received
-        if is_new:
-            flow.received.add(packet.sequence)
-            flow.receiver_pending.add(packet.sequence)
-        duplicate_ack = packet.sequence > flow.next_expected
-        while flow.next_expected in flow.receiver_pending:
-            flow.receiver_pending.remove(flow.next_expected)
-            flow.next_expected += 1
-        self._schedule(
-            self.now + self.link.propagation_delay,
-            "ack",
-            (packet, ecn, is_new, duplicate_ack, flow.next_expected),
-        )
-
-    def _ack(
-        self,
-        packet: Packet,
-        ecn: bool,
-        is_new: bool,
-        duplicate_ack: bool,
-        next_expected: int,
-    ) -> None:
-        assert self._traffic is not None
-        flow = self._traffic.flows[packet.flow_id]
-        flow.outstanding.pop(packet.sequence, None)
-        flow.lost.discard(packet.sequence)
-        if is_new:
-            flow.bytes_acked += packet.size
-        if packet.sequence not in flow.retransmitted:
-            flow.rtt_samples.append(self.now - packet.sent_at)
-        flow.ecn |= ecn
-        flow.duplicate_acks += int(duplicate_ack)
-        flow.ack_expected = max(flow.ack_expected, next_expected)
-
-    def _feedback(
-        self,
-        flow: Flow,
-        recorder: "MetricsRecorder",
-        update_controller: bool = True,
-    ) -> None:
-        interval = self.now - flow.last_feedback
-        if interval <= 0:
-            return
-        timed_out = {
-            sequence
-            for sequence, packet in flow.outstanding.items()
-            if self.now - packet.sent_at >= flow.controller.retransmission_timeout
-        }
-        for sequence in sorted(flow.lost | timed_out):
-            if sequence in flow.outstanding and sequence not in flow.queued_retries:
-                flow.retries.append(sequence)
-                flow.queued_retries.add(sequence)
-        rtt = (
-            sum(flow.rtt_samples) / len(flow.rtt_samples)
-            if flow.rtt_samples
-            else flow.controller.rtt_estimate
-        )
-        feedback = MappingProxyType(
-            {
-                "rtt": rtt,
-                "rtt_sample_valid": bool(flow.rtt_samples),
-                "loss": flow.dropped > 0,
-                "ecn": flow.ecn,
-                "bytes_acked": flow.bytes_acked,
-                "packets_sent": flow.sent,
-                "packets_dropped": flow.dropped,
-                "duplicate_acks": flow.duplicate_acks,
-                "ack_advanced": flow.ack_expected > flow.last_expected,
-                "timeout": bool(timed_out),
-                "recovery_complete": (
-                    flow.recovery_until is not None
-                    and flow.ack_expected > flow.recovery_until
-                ),
-            }
-        )
-        if update_controller:
-            old_state = flow.controller.state
-            flow.controller.step(feedback)
-            if flow.controller.state == State.FAST_RECOVERY:
-                if old_state != State.FAST_RECOVERY:
-                    flow.recovery_until = flow.next_sequence - 1
-            else:
-                flow.recovery_until = None
-        recorder.record(
-            self.now,
-            flow.flow_id,
-            feedback,
-            interval=interval,
-            queue_depth=self.link.queue_depth(self.now),
-            cwnd=flow.controller.cwnd,
-            state=flow.controller.state.value,
-        )
-        flow.last_feedback = self.now
-        flow.last_expected = flow.ack_expected
-        flow.sent = flow.dropped = flow.bytes_acked = flow.duplicate_acks = 0
-        flow.ecn = False
-        flow.rtt_samples.clear()
-        if update_controller:
-            self._schedule(self.now + flow.controller.rtt_estimate, "feedback", flow)
-
-    def run(
-        self,
-        traffic: TrafficGenerator,
-        duration: float,
-        recorder: "MetricsRecorder | None" = None,
-    ) -> "MetricsRecorder":
-        """Run once for simulated seconds and return the observing recorder."""
-        from src.telemetry import MetricsRecorder
-
-        if self._started:
-            raise ValueError("create a fresh scheduler for each experiment")
+        :param traffic: A ``TrafficGenerator`` whose flows are to be simulated.
+        :param duration: Simulated wall-clock seconds to run.
+        :param recorder: A ``MetricsRecorder`` that observes each RTT event.
+        :returns: The same ``recorder`` after all events have been processed.
+        """
         if not math.isfinite(duration) or duration <= 0:
             raise ValueError("duration must be finite and positive")
-        if self._events or self.now != 0:
-            raise ValueError("run requires a fresh scheduler without submitted packets")
-        self._started = True
-        self._traffic = traffic
-        recorder = recorder if recorder is not None else MetricsRecorder()
-        phase = 8 * traffic.packet_size / self.link.bandwidth
-        for flow in traffic.flows.values():
-            recorder.register(flow.flow_id, flow.start_time)
-            self._schedule(flow.start_time + self.rng.random() * phase, "send", flow)
-            self._schedule(
-                flow.start_time + flow.controller.initial_rtt,
-                "feedback",
-                flow,
-            )
-        if traffic.cross_traffic_rate:
-            self._schedule(0.0, "background", 0)
-        while self._events and self._events[0].time <= duration:
-            event = heapq.heappop(self._events)
-            self.now = event.time
-            if event.kind == "send":
-                self._send(event.payload)
-            elif event.kind == "receive":
-                self._receive(*event.payload)
-            elif event.kind == "ack":
-                self._ack(*event.payload)
-            elif event.kind == "feedback":
-                self._feedback(event.payload, recorder)
-            else:
-                self.submit(
-                    Packet(-1, event.payload, self.now, traffic.packet_size), self.now
-                )
-                self._schedule(
-                    self.now + traffic.packet_size / traffic.cross_traffic_rate,
-                    "background",
-                    event.payload + 1,
-                )
-        self.now = duration
-        for flow in traffic.flows.values():
+
+        rng = random.Random(self.seed)
+        link = self.link
+        mss = traffic.packet_bytes
+
+        # Link drain rate in packets per second.
+        drain_pps = link.bandwidth / (mss * 8)
+        background_pps = traffic.background_bytes_per_second / mss
+        effective_drain_pps = max(0.0, drain_pps - background_pps)
+
+        # Shared queue state (fractional packets for smooth drain accounting).
+        queue_depth = 0.0
+        last_event_time = 0.0
+
+        # Min-heap of (event_time, flow_id).
+        events: list[tuple[float, int]] = []
+        for flow_id, flow in traffic.flows.items():
             if flow.start_time < duration:
-                self._feedback(flow, recorder, update_controller=False)
-        recorder.finish(duration)
+                heapq.heappush(events, (flow.start_time, flow_id))
+
+        while events:
+            event_time, flow_id = heapq.heappop(events)
+            if event_time >= duration:
+                break
+
+            flow = traffic.flows[flow_id]
+            controller = flow.controller
+
+            # Drain shared queue since the last processed event.
+            elapsed = event_time - last_event_time
+            queue_depth = max(0.0, queue_depth - effective_drain_pps * elapsed)
+            last_event_time = event_time
+
+            # RTT = propagation round-trip + queuing delay at current depth.
+            base_rtt = 2.0 * link.propagation_delay
+            queuing_delay = queue_depth / drain_pps if drain_pps > 0 else 0.0
+            rtt = base_rtt + queuing_delay
+            if self.jitter > 0.0:
+                rtt = max(base_rtt * 0.5, rtt + rng.gauss(0.0, self.jitter))
+
+            # Packets this flow injects this RTT.
+            packets_to_send = max(1, int(controller.cwnd))
+
+            # ECN: mark if queue was already above threshold before this flow.
+            ecn = queue_depth > link.ecn_threshold * link.buffer_size
+
+            # Tail-drop: admit only what fits in the buffer.
+            new_depth = queue_depth + packets_to_send
+            if new_depth > link.buffer_size:
+                dropped_buffer = int(new_depth - link.buffer_size)
+                queue_depth = float(link.buffer_size)
+            else:
+                dropped_buffer = 0
+                queue_depth = new_depth
+            packets_admitted = packets_to_send - dropped_buffer
+
+            # Apportion link capacity proportionally among active flows so that
+            # total bytes_acked never exceeds physical link capacity.
+            active_cwnds = [
+                max(1, int(f.controller.cwnd))
+                for f in traffic.flows.values()
+                if f.start_time <= event_time
+            ]
+            total_cwnd = sum(active_cwnds) or 1
+            capacity_per_rtt = int(effective_drain_pps * rtt)
+            flow_capacity = int(int(controller.cwnd) / total_cwnd * capacity_per_rtt)
+
+            # Deliverable this RTT: bounded by both admitted and flow capacity.
+            deliverable = min(packets_admitted, flow_capacity)
+
+            # Random loss applied only to deliverable packets.
+            random_drops = 0
+            if self.loss_probability > 0.0 and deliverable > 0:
+                random_drops = sum(
+                    1 for _ in range(deliverable)
+                    if rng.random() < self.loss_probability
+                )
+
+            packets_through = deliverable - random_drops
+            bytes_acked = max(0, packets_through) * mss
+            total_dropped = dropped_buffer + random_drops
+
+            # Reno recovery signals: trigger fast recovery on buffer overflow;
+            # clear it on a clean RTT.
+            dup_acks = 0
+            recovery_complete = False
+            ack_advanced = True
+            if dropped_buffer > 0 and not flow.in_recovery:
+                dup_acks = 3
+                flow.in_recovery = True
+                ack_advanced = False
+            elif flow.in_recovery:
+                if total_dropped == 0:
+                    recovery_complete = True
+                    flow.in_recovery = False
+                else:
+                    ack_advanced = False
+
+            feedback = {
+                "rtt": rtt,
+                "loss": total_dropped > 0,
+                "ecn": ecn,
+                "bytes_acked": bytes_acked,
+                "packets_sent": packets_to_send,
+                "packets_dropped": total_dropped,
+                "duplicate_acks": dup_acks,
+                "recovery_complete": recovery_complete,
+                "rtt_sample_valid": True,
+                "ack_advanced": ack_advanced,
+            }
+
+            recorder.record(event_time, flow_id, feedback, interval=rtt)
+            controller.step(feedback)
+
+            next_time = event_time + rtt
+            if next_time < duration:
+                heapq.heappush(events, (next_time, flow_id))
+
         return recorder
-
-
-class Simulation:
-    """Connect traffic, a bottleneck scheduler, and a read-only observer."""
-
-    def __init__(
-        self,
-        link: Link,
-        traffic: TrafficGenerator,
-        recorder: "MetricsRecorder | None" = None,
-        seed: int = 0,
-        loss_probability: float = 0.0,
-        jitter: float = 0.0,
-    ) -> None:
-        """Construct one reproducible experiment without running it."""
-        self.traffic = traffic
-        self.recorder = recorder
-        self.scheduler = Scheduler(link, seed, loss_probability, jitter)
-
-    def run(self, duration: float = 60.0) -> "MetricsRecorder":
-        """Run for simulated seconds and return collected metrics."""
-        self.recorder = self.scheduler.run(self.traffic, duration, self.recorder)
-        return self.recorder

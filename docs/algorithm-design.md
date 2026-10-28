@@ -1,44 +1,31 @@
 # Algorithm Design
 
-**Track C: Congestion Control — Saint Louis University**
+**Owner: Mains Mainuddin — issues #4, #6, #7, and #8**
 
-## Algorithm choice and units
+## Controller interface
 
-`CongestionController` is an abstract interface with independent per-flow window
-and RTT state. `step(feedback)` returns a paced rate in bytes/second:
+`CongestionController` is an abstract interface. Each flow needs its own instance.
+The controller maintains window and RTT state, reads a mapping, and returns a
+paced rate without changing the input:
 
 ```text
 send_rate = cwnd * mss / rtt_estimate
 ```
 
-`AIMDController` adds one packet after a successful round and halves its window
-once if the round reports loss or ECN, with a one-packet floor. A round without
-newly acknowledged bytes does not grow the window.
+The window and threshold are in packets, MSS is payload bytes, RTT is in seconds,
+and send rate is bytes/second. Initialization rejects invalid/nonfinite windows,
+RTTs, and packet sizes.
 
-`RenoController` adds slow start, congestion avoidance, fast recovery, and
-timeout response. Its state transitions use the concepts in
-[RFC 5681](https://www.rfc-editor.org/rfc/rfc5681.html), adapted to per-RTT
-feedback. This educational aggregate controller is not a complete TCP stack.
+## AIMD baseline
 
-## State variables
+`AIMDController` adds one packet per successful feedback round. Loss or ECN
+halves the window once per round, with a one-packet floor. No acknowledged
+payload means no additive growth. The baseline exposes congestion avoidance.
 
-| Variable | Meaning |
-|---|---|
-| `cwnd` | Window in packets; may be fractional after halving |
-| `ssthresh` | Slow-start threshold in packets |
-| `mss` | Payload bytes, equal to the traffic packet size |
-| `srtt` | Smoothed RTT in seconds, initially unavailable |
-| `rttvar` | RTT deviation in seconds, initially unavailable |
-| `initial_rtt` | Positive pacing estimate before measured feedback |
-| `state` | Slow start, congestion avoidance, or fast recovery |
-| `transitions` | Recorded old/new state pairs |
+## RTT estimates
 
-The CLI estimates initial RTT as two propagation delays plus one packet's
-service time. Sharing a controller instance between flows is rejected.
-
-## RTT estimation
-
-The first valid sample R sets SRTT to R and RTTVAR to R/2. Subsequent samples use:
+The first valid sample R initializes SRTT to R and RTTVAR to R/2. Later samples
+update deviation using the previous SRTT before updating SRTT:
 
 ```text
 rttvar = 0.75 * rttvar + 0.25 * abs(old_srtt - R)
@@ -46,94 +33,52 @@ srtt   = 0.875 * old_srtt + 0.125 * R
 rto    = max(1.0, srtt + max(0.001, 4 * rttvar))
 ```
 
-RTTVAR uses the previous SRTT, following
-[RFC 6298](https://www.rfc-editor.org/rfc/rfc6298.html). Fallback RTTs do not update
-the estimator. The scheduler discards measurements for sequences that were
-retransmitted, avoiding ambiguous sample timing.
+These constants and update order follow
+[RFC 6298](https://www.rfc-editor.org/rfc/rfc6298.html). A positive initial RTT
+provides pacing before measurements arrive. A feedback RTT explicitly marked
+as a fallback does not update the estimator.
 
-## Reno state machine
+## Reno-style state machine
 
-```mermaid
-stateDiagram-v2
-    [*] --> SLOW_START
-    SLOW_START --> CONGESTION_AVOIDANCE: threshold, loss, or ECN
-    SLOW_START --> FAST_RECOVERY: three duplicate ACKs
-    CONGESTION_AVOIDANCE --> FAST_RECOVERY: three duplicate ACKs
-    FAST_RECOVERY --> CONGESTION_AVOIDANCE: recovery_complete
-    CONGESTION_AVOIDANCE --> SLOW_START: timeout
-    FAST_RECOVERY --> SLOW_START: timeout
-```
+`RenoController` provides a per-RTT educational model of the concepts in
+[RFC 5681](https://www.rfc-editor.org/rfc/rfc5681.html), not a complete TCP stack.
 
 - Slow start doubles the window per successful RTT up to the threshold.
 - Congestion avoidance adds one packet per successful RTT.
-- Loss or ECN without duplicate-ACK recovery halves the window once.
-- Three duplicate ACKs set `ssthresh = max(2, cwnd / 2)` and enter fast recovery
-  with the threshold plus duplicate-ACK inflation.
-- Further duplicate ACKs inflate the recovery window. Completion deflates it to
-  the threshold and returns to congestion avoidance.
-- Timeout sets the threshold to at least half the prior window and restarts at
-  one packet in slow start.
+- Loss or ECN without recovery signals halves the window once.
+- Three duplicate ACKs enter fast recovery, set the threshold to at least half
+  the prior window, and inflate the window for duplicate ACKs.
+- Explicit recovery completion deflates to the threshold and returns to
+  congestion avoidance.
+- Timeout restarts slow start at one packet.
 
-Duplicate ACKs can accumulate across feedback intervals. ACK progress resets
-the duplicate count. Recovery ends after an ACK reaches the sender covering the
-recovery boundary. Current state and recorded transitions are observable.
+Duplicate ACK signals can accumulate across rounds. Advancing ACK progress
+resets the count. State changes are retained as old/new pairs in `transitions`.
 
-## Feedback interface
+## Feedback expected from the simulator
 
-Every estimated RTT, the simulator passes an immutable `MappingProxyType`.
+| Field | Meaning |
+|---|---|
+| `rtt` | Positive RTT in seconds |
+| `loss` | Congestion loss signal |
+| `ecn` | Congestion marking signal |
+| `bytes_acked` | Newly acknowledged payload bytes |
+| `rtt_sample_valid` | Optional; false means RTT is only a fallback |
+| `duplicate_acks` | Optional; new duplicate ACK signals |
+| `ack_advanced` | Optional; cumulative ACK progress |
+| `timeout` | Optional timeout signal |
+| `recovery_complete` | Optional end-of-recovery signal |
 
-| Field | Type | Meaning |
-|---|---|---|
-| `rtt` | float | Mean measured RTT this round, or previous estimate |
-| `rtt_sample_valid` | bool | RTT is a measurement rather than a fallback |
-| `loss` | bool | At least one attempted transmission dropped this round |
-| `ecn` | bool | At least one acknowledged packet was marked |
-| `bytes_acked` | int | Newly acknowledged unique payload bytes |
-| `packets_sent` | int | Attempts, including retries |
-| `packets_dropped` | int | Random or buffer drops among attempts |
-| `duplicate_acks` | int | New out-of-order reception ACK signals |
-| `ack_advanced` | bool | ACK progress since previous feedback |
-| `timeout` | bool | An outstanding packet reached the estimated timeout |
-| `recovery_complete` | bool | ACK progress passed the recovery boundary |
+The four original fields remain supported. Explicit recovery fields are proposed
+for coordination with Henry; the controller does not synthesize those signals.
+Feedback may be immutable, and the controller does not read telemetry state.
 
-The original four-field contract is retained, with optional fields making
-recovery observable. Direct callers may omit optional fields; a plain RTT sample
-is assumed valid unless marked otherwise. Neither controller changes feedback.
+## Validation and integration
 
-## Simulation
+`tests/test_controller_behavior.py` verifies growth, halving, floors, RTT
+initialization/EWMA/convergence, immutable inputs, threshold transitions,
+duplicate-ACK recovery, timeout, and invalid inputs.
 
-The event heap orders paced sends, receiver arrivals, ACK arrivals, and feedback
-by simulated time; equal-time events use stable insertion order. Sends are
-spaced by `mss / send_rate` and outstanding packet count is limited by the
-integer window. Retries precede new payloads.
-
-The FIFO serializes packets for `size * 8 / bandwidth` seconds. Capacity includes
-the packet in service. Full buffers tail-drop; accepted packets above the ECN
-fraction are marked. Forward and return propagation delay determine ACK timing.
-A seeded local RNG controls initial pacing phases, random loss, and extra
-forward jitter. Fixed-rate background traffic shares the link.
-
-Per-round drop feedback and timeout identify retry sequences. Receiver gaps
-generate duplicate-ACK signals. Sequence bookkeeping avoids counting payload
-twice. The model uses per-packet ACKs and ideal per-round loss reporting rather
-than a full TCP cumulative-ACK and retransmission timer implementation.
-
-## Metrics and evaluation
-
-Only feedback, time, queue depth, and controller state reach `MetricsRecorder`.
-Metric calculation belongs to telemetry. Stored history is immutable and
-snapshots are detached copies.
-
-CSV/JSON throughput is bytes/second, RTT is milliseconds, and loss is percent.
-Jain's index is `sum(x)^2 / (n * sum(x^2))`; empty/all-zero input returns zero by
-documented convention. Scaling rates before calculation avoids overflow.
-
-Summary throughput divides cumulative unique acknowledged bytes by each flow's
-active duration. Time-series fairness uses the latest interval rates. Recording
-the final partial interval keeps exported counters consistent with the summary.
-RTT mean and variance summarize recorded interval samples.
-
-Compare both algorithms with identical link settings and seeds, then exercise
-loss, small buffers, staggered starts, and cross-traffic. Integration requires
-five positive flow rates, fairness >= 0.9, matching parseable exports, and
-execution under 30 wall-clock seconds. See [evaluation results](evaluation.md).
+Simulation and telemetry work are outside this contribution. The integration
+contract and pending end-to-end validation are documented in
+[integration-contract.md](integration-contract.md).

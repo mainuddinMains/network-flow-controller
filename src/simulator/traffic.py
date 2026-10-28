@@ -1,85 +1,73 @@
-"""Independent flow state and configurable traffic sources."""
+"""Traffic generator for multiple concurrent congestion-controlled flows."""
 
 import math
-from collections import deque
-from collections.abc import Callable, Sequence
-from dataclasses import dataclass, field
-
-from src.algorithm import AIMDController, CongestionController
-
-from .link import Packet
+from collections.abc import Callable
 
 
-@dataclass
 class Flow:
-    """A paced flow's packet bookkeeping and per-round raw observations."""
+    """A single flow driven by its own CongestionController instance.
 
-    flow_id: int
-    controller: CongestionController
-    start_time: float
-    packet_size: int
-    next_sequence: int = 0
-    next_expected: int = 0
-    ack_expected: int = 0
-    last_expected: int = 0
-    last_feedback: float = 0.0
-    sent: int = 0
-    dropped: int = 0
-    bytes_acked: int = 0
-    duplicate_acks: int = 0
-    ecn: bool = False
-    recovery_until: int | None = None
-    rtt_samples: list[float] = field(default_factory=list)
-    outstanding: dict[int, Packet] = field(default_factory=dict)
-    received: set[int] = field(default_factory=set)
-    retransmitted: set[int] = field(default_factory=set)
-    receiver_pending: set[int] = field(default_factory=set)
-    lost: set[int] = field(default_factory=set)
-    retries: deque[int] = field(default_factory=deque)
-    queued_retries: set[int] = field(default_factory=set)
-
-
-class TrafficGenerator:
-    """Create independent controllers with simultaneous or staggered starts."""
+    :param flow_id: Unique integer identifier for this flow.
+    :param controller: The congestion controller governing this flow's window.
+    :param start_time: Simulated time in seconds when the flow begins sending.
+    :param packet_bytes: Payload size in bytes (MSS equivalent).
+    """
 
     def __init__(
         self,
-        flows: int = 5,
-        controller_factory: Callable[[], CongestionController] | None = None,
-        start_times: Sequence[float] | None = None,
-        cross_traffic_rate: float = 0.0,
-        packet_size: int = 1500,
+        flow_id: int,
+        controller: object,
+        start_time: float,
+        packet_bytes: int,
     ) -> None:
-        """Configure start times and background traffic in bytes per second."""
-        if not isinstance(flows, int) or flows < 1:
-            raise ValueError("flows must be a positive integer")
-        if not isinstance(packet_size, int) or packet_size < 1:
-            raise ValueError("packet_size must be a positive integer")
-        if not math.isfinite(cross_traffic_rate) or cross_traffic_rate < 0:
-            raise ValueError("cross_traffic_rate must be finite and nonnegative")
-        starts = list(start_times) if start_times is not None else [0.0] * flows
-        if len(starts) != flows:
-            raise ValueError("start_times must contain one value for each flow")
-        if any(not math.isfinite(time) or time < 0 for time in starts):
-            raise ValueError("start times must be finite and nonnegative")
-        factory = controller_factory or (lambda: AIMDController(mss=packet_size))
-        self.flows = {}
-        controller_ids = set()
-        for flow_id, start_time in enumerate(starts):
-            controller = factory()
-            if not isinstance(controller, CongestionController):
-                raise ValueError("controller_factory must return a controller")
-            if id(controller) in controller_ids:
-                raise ValueError("each flow must have an independent controller")
-            if controller.mss != packet_size:
-                raise ValueError("controller MSS must equal the traffic packet size")
-            controller_ids.add(id(controller))
-            self.flows[flow_id] = Flow(
-                flow_id,
-                controller,
-                start_time,
-                packet_size,
-                last_feedback=start_time,
+        """Store flow parameters and initialize recovery state."""
+        self.flow_id = flow_id
+        self.controller = controller
+        self.start_time = float(start_time)
+        self.packet_bytes = int(packet_bytes)
+        self.in_recovery: bool = False
+
+
+class TrafficGenerator:
+    """Spawn N independent flows each driven by its own CongestionController.
+
+    :param n_flows: Number of flows to create.
+    :param controller_factory: No-argument callable that returns a new controller.
+    :param start_times: Per-flow start times in seconds; defaults to zero for all.
+    :param background_bytes_per_second: Fixed cross-traffic rate in bytes per second.
+    :param packet_bytes: Packet payload size in bytes used by all flows.
+    """
+
+    def __init__(
+        self,
+        n_flows: int,
+        controller_factory: Callable,
+        start_times: list[float] | None = None,
+        background_bytes_per_second: float = 0.0,
+        packet_bytes: int = 1500,
+    ) -> None:
+        """Validate parameters and create one Flow per requested flow."""
+        if not isinstance(n_flows, int) or isinstance(n_flows, bool) or n_flows < 1:
+            raise ValueError("n_flows must be a positive integer")
+        if not isinstance(packet_bytes, int) or isinstance(packet_bytes, bool) or packet_bytes < 1:
+            raise ValueError("packet_bytes must be a positive integer")
+        if not math.isfinite(background_bytes_per_second) or background_bytes_per_second < 0:
+            raise ValueError("background_bytes_per_second must be finite and non-negative")
+
+        if start_times is None:
+            start_times = [0.0] * n_flows
+        elif len(start_times) != n_flows:
+            raise ValueError("start_times must contain one entry per flow")
+
+        self.background_bytes_per_second = float(background_bytes_per_second)
+        self.packet_bytes = int(packet_bytes)
+
+        self.flows: dict[int, Flow] = {
+            i: Flow(
+                flow_id=i,
+                controller=controller_factory(),
+                start_time=float(start_times[i]),
+                packet_bytes=self.packet_bytes,
             )
-        self.cross_traffic_rate = cross_traffic_rate
-        self.packet_size = packet_size
+            for i in range(n_flows)
+        }
